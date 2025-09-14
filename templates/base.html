@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BloodLink Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #ef4444; /* red-500 */
+            --primary-dark: #dc2626;  /* red-600 */
+            --bg-dark: #111827;      /* gray-900 */
+            --text-light: #f9fafb;   /* gray-50 */
+            --text-dark: #1f2937;    /* gray-800 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            color: var(--text-light);
+            background-color: var(--bg-dark);
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("{{ url_for('static', filename='bloodlink.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            opacity: 0.5;
+            z-index: -2;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(17, 24, 39, 0.6);
+            z-index: -1;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: rgba(220, 38, 38, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        .navbar .logo i {
+            margin-right: 0.5rem;
+            color: white;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+        }
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: #fca5a5;
+        }
+        .nav-button-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-left: 1.5rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-dark);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--primary-color);
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        h1, h2 {
+            color: var(--text-light);
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+        .card, .dashboard-card, table {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card { padding: 1.5rem; margin-bottom: 1.5rem; }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .dashboard-card {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem;
+        }
+        .dashboard-card .icon {
+            font-size: 2.5rem;
+            color: white;
+            margin-right: 1.5rem;
+            width: 50px;
+        }
+        .dashboard-card .info h3 { margin: 0; font-size: 1rem; color: #d1d5db; }
+        .dashboard-card .info .number { margin: 0; font-size: 2.25rem; font-weight: 700; color: var(--text-light); }
+        .alert-card { background-color: rgba(254, 226, 226, 0.8); border: 1px solid #f87171; color: #991b1b; }
+        table { width: 100%; border-collapse: collapse; overflow: hidden; }
+        th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-light); }
+        thead { background-color: rgba(255, 255, 255, 0.1); }
+        tbody tr:hover { background-color: rgba(255, 255, 255, 0.1); }
+        a { color: #fca5a5; text-decoration: none; }
+        .form-container { display: flex; flex-direction: column; gap: 1rem; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 0.5rem; font-weight: 500; color: var(--text-light); }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(255, 255, 255, 0.3); background-color: rgba(255, 255, 255, 0.1); color: var(--text-light); font-size: 1rem;
+        }
+        .form-group select option { background-color: var(--bg-dark); color: var(--text-light); }
+        .flash-messages { list-style: none; padding: 0; position: fixed; top: 5rem; right: 2rem; z-index: 1000; }
+        .flash-messages li {
+            padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); color: white; opacity: 0; animation: fadeInOut 5s forwards;
+        }
+        .flash-success { background-color: #10b981; }
+        .flash-error { background-color: var(--primary-color); }
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; transform: translateY(-20px); }
+            10%, 90% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{{ url_for('index') }}" class="logo">
+            <i class="fa-solid fa-droplet"></i>
+            <span>BloodLink Pro</span>
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' else '' }}">Dashboard</a>
+            <a href="{{ url_for('view_inventory') }}" class="{{ 'active' if request.endpoint == 'view_inventory' else '' }}">Inventory</a>
+            <a href="{{ url_for('view_reports') }}" class="{{ 'active' if request.endpoint == 'view_reports' else '' }}">Reports</a>
+            <a href="{{ url_for('view_donors') }}" class="{{ 'active' if request.endpoint == 'view_donors' else '' }}">Donors</a>
+            <div class="nav-button-group">
+                <a href="{{ url_for('add_inventory') }}" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i>Add Inventory
+                </a>
+                <a href="{{ url_for('add_donor') }}" class="btn btn-primary">
+                    <i class="fa-solid fa-user-plus"></i>Add Donor
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <li class="flash-{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>
+
+

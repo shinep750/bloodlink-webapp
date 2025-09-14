@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+<head>
+    <style>
+        .donor-name-link {
+            font-weight: 600;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .donor-name-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+{% block content %}
+    <h1>Registered Donors</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Blood Group</th>
+                <th>Contact</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for donor in donors %}
+            <tr>
+                <!-- Make the name a clickable link -->
+                <td>
+                    <a href="{{ url_for('view_donor_detail', donor_id=donor.donor_id) }}" class="donor-name-link">
+                        {{ donor.first_name }} {{ donor.last_name }}
+                    </a>
+                </td>
+                <td>{{ donor.blood_group }}</td>
+                <td>{{ donor.contact_number }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+

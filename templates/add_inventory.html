@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="form-container">
+        <h1>Add New Blood Bag to Inventory</h1>
+        <form method="post">
+            <div class="form-group">
+                <label for="donor_id">Select Donor</label>
+                <select name="donor_id" id="donor_id" required>
+                    {% for donor in donors %}
+                        <option value="{{ donor[0] }}">{{ donor[1] }} {{ donor[2] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="bank_id">Select Blood Bank</label>
+                <select name="bank_id" id="bank_id" required>
+                    {% for bank in banks %}
+                        <option value="{{ bank[0] }}">{{ bank[1] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="donation_date">Donation Date</label>
+                <input type="date" name="donation_date" id="donation_date" required>
+            </div>
+            <button type="submit" class="btn">Add to Inventory</button>
+        </form>
+    </div>
+{% endblock %}
+

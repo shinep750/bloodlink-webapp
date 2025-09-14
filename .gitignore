@@ -1,0 +1,9 @@
+venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# OS-specific files
+.DS_Store
+

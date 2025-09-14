@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Reports & Analytics</h1>
+
+    <div class="dashboard-grid">
+        <!-- Chart 1: Inventory by Blood Group -->
+        <div class="card chart-container">
+            <h2>Available Inventory by Blood Group</h2>
+            <canvas id="inventoryChart"></canvas>
+        </div>
+
+        <!-- Chart 2: Donations Over Time -->
+        <div class="card chart-container">
+            <h2>Donations Per Month</h2>
+            <canvas id="donationsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Table: Eligible Donors -->
+    <h2 style="margin-top: 2.5rem;">Eligible Donors</h2>
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Blood Group</th>
+                    <th>Contact</th>
+                    <th>Last Donated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for donor in eligible_donors %}
+                <tr>
+                    <td><a href="{{ url_for('view_donor_detail', donor_id=donor.donor_id) }}">{{ donor.first_name }} {{ donor.last_name }}</a></td>
+                    <td>{{ donor.blood_group }}</td>
+                    <td>{{ donor.contact_number }}</td>
+                    <td>{{ donor.last_donation_date.strftime('%Y-%m-%d') if donor.last_donation_date else 'Never' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center;">No donors are currently eligible.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const chartTextColor = 'rgba(249, 250, 251, 0.8)'; // Using var(--text-light) from CSS
+    
+    // ==> FIX: Manually build the arrays for Chart.js <==
+
+    // --- Data for Inventory Chart ---
+    const inventoryData = [
+        {% for item in inventory_by_group %}
+            { blood_group: '{{ item.blood_group }}', count: {{ item.count }} },
+        {% endfor %}
+    ];
+    const inventoryLabels = inventoryData.map(item => item.blood_group);
+    const inventoryCounts = inventoryData.map(item => item.count);
+
+    // --- Data for Donations Chart ---
+    const donationsData = [
+        {% for item in donations_per_month %}
+            { month: '{{ item.month }}', count: {{ item.count }} },
+        {% endfor %}
+    ];
+    const donationLabels = donationsData.map(item => item.month);
+    const donationCounts = donationsData.map(item => item.count);
+
+
+    // --- Render Inventory Chart (Bar) ---
+    const inventoryCtx = document.getElementById('inventoryChart').getContext('2d');
+    new Chart(inventoryCtx, {
+        type: 'bar',
+        data: {
+            labels: inventoryLabels,
+            datasets: [{
+                label: 'Available Units',
+                data: inventoryCounts,
+                backgroundColor: 'rgba(248, 113, 113, 0.6)',
+                borderColor: 'rgba(248, 113, 113, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: { color: chartTextColor },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                    ticks: { color: chartTextColor },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                }
+            }
+        }
+    });
+
+    // --- Render Donations Chart (Line) ---
+    const donationsCtx = document.getElementById('donationsChart').getContext('2d');
+    new Chart(donationsCtx, {
+        type: 'line',
+        data: {
+            labels: donationLabels,
+            datasets: [{
+                label: 'Donations',
+                data: donationCounts,
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                 y: { 
+                    beginAtZero: true,
+                    ticks: { color: chartTextColor },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                    ticks: { color: chartTextColor },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+
+

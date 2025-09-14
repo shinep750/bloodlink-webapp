@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Available Blood Inventory</h1>
+
+    <div class="card filter-card">
+        <form method="get" action="{{ url_for('view_inventory') }}">
+            <input type="text" name="blood_group" placeholder="Filter by blood group..." value="{{ search_group }}">
+            <select name="bank_id">
+                <option value="">Filter by Blood Bank...</option>
+                {% for bank in banks %}
+                    <option value="{{ bank.bank_id }}" {% if search_bank|string == bank.bank_id|string %}selected{% endif %}>
+                        {{ bank.bank_name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Bag ID</th>
+                <th>Blood Group</th>
+                <th>Donation Date</th>
+                <th>Expiry Date</th>
+                <th>Donor Name</th>
+                <th>Blood Bank</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in inventory %}
+                <tr>
+                    <td>{{ item.bag_id }}</td>
+                    <td>{{ item.blood_group }}</td>
+                    <td>{{ item.donation_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ item.expiry_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ item.donor_name }}</td>
+                    <td>{{ item.bank_name }}</td>
+                    <td>
+                        <!-- THE FIX IS HERE: 'mark_used' is changed to 'use_blood_bag' -->
+                        <form action="{{ url_for('use_blood_bag', bag_id=item.bag_id) }}" method="post" onsubmit="return confirm('Are you sure you want to mark this bag as used?');">
+                            <button type="submit" class="btn btn-secondary">Mark as Used</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center;">No inventory matching your filters.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+

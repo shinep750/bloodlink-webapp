@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+<head>
+    <style>
+        .detail-card {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .detail-item h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+        .detail-item p {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .status-Available { background-color: #D1FAE5; color: #065F46; }
+        .status-Used { background-color: #FEF3C7; color: #92400E; }
+        .status-Expired { background-color: #FEE2E2; color: #991B1B; }
+    </style>
+</head>
+
+{% block content %}
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h1>Donor Profile</h1>
+        <a href="{{ url_for('view_donors') }}" class="btn">&larr; Back to All Donors</a>
+    </div>
+
+    <div class="detail-card">
+        <div class="detail-item">
+            <h3>Full Name</h3>
+            <p>{{ donor.first_name }} {{ donor.last_name }}</p>
+        </div>
+        <div class="detail-item">
+            <h3>Blood Group</h3>
+            <p>{{ donor.blood_group }}</p>
+        </div>
+        <div class="detail-item">
+            <h3>Contact Number</h3>
+            <p>{{ donor.contact_number }}</p>
+        </div>
+        <div class="detail-item">
+            <h3>Email Address</h3>
+            <p>{{ donor.email or 'Not Provided' }}</p>
+        </div>
+        <div class="detail-item">
+            <h3>Date of Birth</h3>
+            <p>{{ donor.date_of_birth.strftime('%Y-%m-%d') }}</p>
+        </div>
+        <div class="detail-item">
+            <h3>Last Donation</h3>
+            <p>{{ donor.last_donation_date.strftime('%Y-%m-%d') if donor.last_donation_date else 'N/A' }}</p>
+        </div>
+    </div>
+
+    <h2>Donation History</h2>
+    {% if donation_history %}
+    <table>
+        <thead>
+            <tr>
+                <th>Bag ID</th>
+                <th>Donation Date</th>
+                <th>Status</th>
+                <th>Donated At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for donation in donation_history %}
+            <tr>
+                <td>{{ donation.bag_id }}</td>
+                <td>{{ donation.donation_date.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <span class="status-badge status-{{ donation.status }}">{{ donation.status }}</span>
+                </td>
+                <td>{{ donation.bank_name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>This donor has no recorded donations yet.</p>
+    {% endif %}
+
+{% endblock %}
+
