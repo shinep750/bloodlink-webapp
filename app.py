@@ -42,18 +42,18 @@ def load_user(user_id):
     conn.close()
     if user:
         return StaffUser(
-            id=user['staff_id'], 
-            username=user['username'], 
-            full_name=user['full_name'], 
+            id=user['staff_id'],
+            username=user['username'],
+            full_name=user['full_name'],
             is_admin=user['is_admin'],
-            must_change_password=user['must_change_password']
+            must_change_password=user.get('must_change_password', False)
         )
     return None
 
 # --- Middleware for Forced Password Change (Admins Only) ---
 @app.before_request
 def before_request_callback():
-    if current_user.is_authenticated and current_user.is_admin and current_user.must_change_password:
+    if current_user.is_authenticated and getattr(current_user, 'is_admin', False) and getattr(current_user, 'must_change_password', False):
         if request.endpoint and request.endpoint not in ('profile', 'logout', 'static'):
             flash("For security, you must change your default password before you can use the application.", "error")
             return redirect(url_for('profile'))
@@ -62,7 +62,7 @@ def before_request_callback():
 def admin_required(f):
     @functools.wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_admin:
+        if not getattr(current_user, 'is_admin', False):
             flash("You do not have permission to access this page.", "error")
             return redirect(url_for('index'))
         return f(*args, **kwargs)
@@ -94,7 +94,7 @@ def admin_login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     return render_template('login.html', is_admin_login=True)
-    
+
 def handle_login_attempt(is_admin_login):
     password = request.form['password']
     conn = get_db_connection()
@@ -119,14 +119,15 @@ def handle_login_attempt(is_admin_login):
 
     if user and check_password_hash(user['password_hash'], password):
         staff_member = StaffUser(
-            id=user['staff_id'], 
-            username=user['username'], 
-            full_name=user['full_name'], 
+            id=user['staff_id'],
+            username=user['username'],
+            full_name=user['full_name'],
             is_admin=user['is_admin'],
-            must_change_password=user['must_change_password']
+            must_change_password=user.get('must_change_password', False)
         )
         login_user(staff_member)
         flash('Logged in successfully!', 'success')
+        # THE FIX: All successful logins now go to the dashboard
         return redirect(url_for('index'))
     else:
         flash('Invalid credentials provided.', 'error')
@@ -139,6 +140,7 @@ def logout():
     flash('You have been logged out.', 'success')
     return redirect(url_for('login'))
 
+# --- Profile & Password Change Route (Admins Only) ---
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -159,15 +161,16 @@ def profile():
         
         if not user_data or not check_password_hash(user_data['password_hash'], current_password):
             flash('Your current password was incorrect.', 'error')
+            return redirect(url_for('profile'))
         else:
             new_password_hash = generate_password_hash(new_password)
             cur.execute("UPDATE Staff SET password_hash = %s, must_change_password = FALSE WHERE staff_id = %s;", (new_password_hash, current_user.id))
             conn.commit()
-            flash('Your password has been updated successfully!', 'success')
-        
-        cur.close()
-        conn.close()
-        return redirect(url_for('profile'))
+            flash('Your password has been updated successfully! You now have full access.', 'success')
+            cur.close()
+            conn.close()
+            # THE FIX: Redirect to dashboard after successful password change
+            return redirect(url_for('index'))
 
     return render_template('profile.html')
 
@@ -198,10 +201,10 @@ def add_user():
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute("INSERT INTO Staff (username, password_hash, full_name, is_admin, secret_code, must_change_password) VALUES (%s, %s, %s, %s, %s, TRUE);",
-                    (username, password_hash, full_name, is_admin, secret_code if not is_admin else None))
+        cur.execute("INSERT INTO Staff (username, password_hash, full_name, is_admin, secret_code, must_change_password) VALUES (%s, %s, %s, %s, %s, %s);",
+                    (username, password_hash, full_name, is_admin, secret_code if not is_admin else None, is_admin)) # Only admins must change password
         conn.commit()
-        flash(f'User "{username}" created successfully! They will be required to change their password on first login.', 'success')
+        flash(f'User "{username}" created successfully!', 'success')
     except errors.UniqueViolation:
         conn.rollback()
         flash(f'Error: Username or Secret Code already exists.', 'error')
@@ -281,6 +284,9 @@ def view_donor_detail(donor_id):
 @app.route('/add_donor', methods=['GET', 'POST'])
 @login_required
 def add_donor():
+    if getattr(current_user, 'is_admin', False):
+        flash("Admins cannot perform this action.", "error")
+        return redirect(url_for('index'))
     if request.method == 'POST':
         first_name = request.form['first_name']
         last_name = request.form['last_name']
@@ -308,6 +314,9 @@ def add_donor():
 @app.route('/add_inventory', methods=['GET', 'POST'])
 @login_required
 def add_inventory():
+    if getattr(current_user, 'is_admin', False):
+        flash("Admins cannot perform this action.", "error")
+        return redirect(url_for('index'))
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     if request.method == 'POST':
@@ -360,10 +369,12 @@ def view_inventory():
     conn.close()
     return render_template('inventory.html', inventory=inventory, banks=banks, recipients=recipients, search_group=search_group, search_bank=search_bank)
 
-# --- THE FIX: Updated transfusion logic ---
 @app.route('/inventory/use/<int:bag_id>', methods=['POST'])
 @login_required
 def use_blood_bag(bag_id):
+    if getattr(current_user, 'is_admin', False):
+        flash("Admins cannot perform this action.", "error")
+        return redirect(url_for('view_inventory'))
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     
@@ -371,11 +382,10 @@ def use_blood_bag(bag_id):
     new_recipient_first_name = request.form.get('new_recipient_first_name')
     new_recipient_last_name = request.form.get('new_recipient_last_name')
     new_recipient_blood_group = request.form.get('new_recipient_blood_group')
-    new_recipient_hospital = request.form.get('new_recipient_hospital') # New field
+    new_recipient_hospital = request.form.get('new_recipient_hospital')
     
     try:
         if new_recipient_first_name and new_recipient_last_name and new_recipient_blood_group:
-            # Create a new recipient and get their ID
             cur.execute(
                 "INSERT INTO Recipients (first_name, last_name, blood_group, hospital_name) VALUES (%s, %s, %s, %s) RETURNING recipient_id;",
                 (new_recipient_first_name, new_recipient_last_name, new_recipient_blood_group, new_recipient_hospital)
@@ -386,7 +396,6 @@ def use_blood_bag(bag_id):
             flash('You must select an existing recipient or enter details for a new one.', 'error')
             return redirect(url_for('view_inventory'))
 
-        # Proceed with the transfusion record
         cur.execute("UPDATE BloodInventory SET status = 'Used' WHERE bag_id = %s;", (bag_id,))
         cur.execute("INSERT INTO BloodTransfusions (bag_id, recipient_id) VALUES (%s, %s);", (bag_id, recipient_id))
         
