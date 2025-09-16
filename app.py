@@ -127,7 +127,6 @@ def handle_login_attempt(is_admin_login):
         )
         login_user(staff_member)
         flash('Logged in successfully!', 'success')
-        # THE FIX: All successful logins now go to the dashboard
         return redirect(url_for('index'))
     else:
         flash('Invalid credentials provided.', 'error')
@@ -140,7 +139,6 @@ def logout():
     flash('You have been logged out.', 'success')
     return redirect(url_for('login'))
 
-# --- Profile & Password Change Route (Admins Only) ---
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -161,7 +159,6 @@ def profile():
         
         if not user_data or not check_password_hash(user_data['password_hash'], current_password):
             flash('Your current password was incorrect.', 'error')
-            return redirect(url_for('profile'))
         else:
             new_password_hash = generate_password_hash(new_password)
             cur.execute("UPDATE Staff SET password_hash = %s, must_change_password = FALSE WHERE staff_id = %s;", (new_password_hash, current_user.id))
@@ -169,7 +166,6 @@ def profile():
             flash('Your password has been updated successfully! You now have full access.', 'success')
             cur.close()
             conn.close()
-            # THE FIX: Redirect to dashboard after successful password change
             return redirect(url_for('index'))
 
     return render_template('profile.html')
@@ -202,7 +198,7 @@ def add_user():
     cur = conn.cursor()
     try:
         cur.execute("INSERT INTO Staff (username, password_hash, full_name, is_admin, secret_code, must_change_password) VALUES (%s, %s, %s, %s, %s, %s);",
-                    (username, password_hash, full_name, is_admin, secret_code if not is_admin else None, is_admin)) # Only admins must change password
+                    (username, password_hash, full_name, is_admin, secret_code if not is_admin else None, is_admin))
         conn.commit()
         flash(f'User "{username}" created successfully!', 'success')
     except errors.UniqueViolation:
