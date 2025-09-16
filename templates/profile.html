@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="centered-container">
+
+        {% if current_user.must_change_password %}
+        <div class="alert-container alert-danger" style="max-width: 500px; width: 100%; box-sizing: border-box;">
+            <div class="alert-icon">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div class="alert-content">
+                <h3>Security Requirement</h3>
+                <p>You must change your default password to continue.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card form-container" style="max-width: 500px; width: 100%; box-sizing: border-box;">
+            <div style="text-align: center;">
+                <h3>Change Your Password</h3>
+                <p style="margin-bottom: 2rem; color: var(--text-muted);">Logged in as: <strong>{{ current_user.username }}</strong></p>
+            </div>
+            
+            <form method="post" action="{{ url_for('profile') }}">
+                <div class="form-group">
+                    <label for="current_password">Current Password</label>
+                    <input type="password" name="current_password" id="current_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" name="new_password" id="new_password" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <input type="password" name="confirm_password" id="confirm_password" required minlength="6">
+                </div>
+                <div style="text-align: center;">
+                    <button type="submit" class="btn btn-primary" style="background-color: var(--primary-color);">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+

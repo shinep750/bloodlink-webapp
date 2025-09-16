@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-box">
+        
+        <h2>{% if is_admin_login %}Admin Login{% else %}Staff Login{% endif %}</h2>
+
+        <form method="post">
+            {% if is_admin_login %}
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" name="username" id="username" required>
+            </div>
+            {% else %}
+            <div class="form-group">
+                <label for="secret_code">Staff ID</label>
+                <input type="text" name="secret_code" id="secret_code" required>
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+
+        <div class="login-footer">
+            {% if is_admin_login %}
+                <a href="{{ url_for('login') }}">Switch to Staff Login</a>
+            {% else %}
+                <a href="{{ url_for('admin_login') }}">Login as Administrator</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

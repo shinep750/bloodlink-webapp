@@ -1,7 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Available Blood Inventory</h1>
+    <div class="page-header">
+        <h1>Available Blood Inventory</h1>
+        {% if not current_user.is_admin %}
+            <a href="{{ url_for('add_inventory') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Inventory</a>
+        {% endif %}
+    </div>
 
     <div class="card filter-card">
         <form method="get" action="{{ url_for('view_inventory') }}">
@@ -27,7 +32,9 @@
                 <th>Expiry Date</th>
                 <th>Donor Name</th>
                 <th>Blood Bank</th>
-                <th>Action</th>
+                {% if not current_user.is_admin %}
+                    <th>Action</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
@@ -39,20 +46,128 @@
                     <td>{{ item.expiry_date.strftime('%Y-%m-%d') }}</td>
                     <td>{{ item.donor_name }}</td>
                     <td>{{ item.bank_name }}</td>
-                    <td>
-                        <!-- THE FIX IS HERE: 'mark_used' is changed to 'use_blood_bag' -->
-                        <form action="{{ url_for('use_blood_bag', bag_id=item.bag_id) }}" method="post" onsubmit="return confirm('Are you sure you want to mark this bag as used?');">
-                            <button type="submit" class="btn btn-secondary">Mark as Used</button>
-                        </form>
-                    </td>
+                    {% if not current_user.is_admin %}
+                        <td>
+                            <button type="button" class="btn btn-secondary" onclick="openTransfusionModal('{{ item.bag_id }}', '{{ item.blood_group }}')">
+                                Mark as Used
+                            </button>
+                        </td>
+                    {% endif %}
                 </tr>
             {% else %}
-                <tr>
-                    <td colspan="7" style="text-align: center;">No inventory matching your filters.</td>
-                </tr>
+                <td colspan="{% if not current_user.is_admin %}7{% else %}6{% endif %}" style="text-align: center;">No inventory matching your filters.</td>
             {% endfor %}
         </tbody>
     </table>
+
+    {% if not current_user.is_admin %}
+        <div id="transfusionModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeTransfusionModal()">&times;</span>
+                <h2>Record Transfusion</h2>
+                <p>You are marking blood bag #<strong id="modalBagId"></strong> (Group <strong id="modalBloodGroup"></strong>) as used.</p>
+                
+                <form id="transfusionForm" method="post">
+                    <div id="existingRecipientSection">
+                        <div class="form-group">
+                            <label for="recipient_id">Select Existing Recipient</label>
+                            <select name="recipient_id" id="recipient_id">
+                                <option value="">-- Please select a recipient --</option>
+                                {% for recipient in recipients %}
+                                <option value="{{ recipient.recipient_id }}">{{ recipient.first_name }} {{ recipient.last_name }} ({{ recipient.blood_group }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="newRecipientToggle" onchange="toggleNewRecipientForm()">
+                        <label for="newRecipientToggle">Or, enter a new recipient</label>
+                    </div>
+                    <div id="newRecipientSection" style="display: none; border-top: 1px solid var(--border-color); margin-top: 1rem; padding-top: 1rem;">
+                        <div class="form-group">
+                            <label for="new_recipient_first_name">First Name</label>
+                            <input type="text" name="new_recipient_first_name" id="new_recipient_first_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_recipient_last_name">Last Name</label>
+                            <input type="text" name="new_recipient_last_name" id="new_recipient_last_name">
+                        </div>
+                        <!-- THE FIX: New field for Hospital Name -->
+                        <div class="form-group">
+                            <label for="new_recipient_hospital">Hospital Name</label>
+                            <input type="text" name="new_recipient_hospital" id="new_recipient_hospital">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_recipient_blood_group">Blood Group</label>
+                            <select name="new_recipient_blood_group" id="new_recipient_blood_group">
+                                <option value="">Select...</option>
+                                <option value="A+">A+</option> <option value="A-">A-</option>
+                                <option value="B+">B+</option> <option value="B-">B-</option>
+                                <option value="AB+">AB+</option> <option value="AB-">AB-</option>
+                                <option value="O+">O+</option> <option value="O-">O-</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Confirm Transfusion</button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    {% if not current_user.is_admin %}
+    <script>
+        const modal = document.getElementById('transfusionModal');
+        const form = document.getElementById('transfusionForm');
+        const modalBagId = document.getElementById('modalBagId');
+        const modalBloodGroup = document.getElementById('modalBloodGroup');
+        const existingRecipientSection = document.getElementById('existingRecipientSection');
+        const newRecipientSection = document.getElementById('newRecipientSection');
+        const newRecipientToggle = document.getElementById('newRecipientToggle');
+
+        function openTransfusionModal(bagId, bloodGroup) {
+            modalBagId.textContent = bagId;
+            modalBloodGroup.textContent = bloodGroup;
+            form.action = `/inventory/use/${bagId}`;
+            modal.style.display = 'block';
+        }
+
+        function closeTransfusionModal() {
+            modal.style.display = 'none';
+            newRecipientToggle.checked = false;
+            toggleNewRecipientForm();
+            form.reset();
+        }
+        
+        function toggleNewRecipientForm() {
+            if (newRecipientToggle.checked) {
+                existingRecipientSection.style.display = 'none';
+                newRecipientSection.style.display = 'block';
+                document.getElementById('recipient_id').required = false;
+                document.getElementById('new_recipient_first_name').required = true;
+                document.getElementById('new_recipient_last_name').required = true;
+                document.getElementById('new_recipient_hospital').required = true; // Make hospital required
+                document.getElementById('new_recipient_blood_group').required = true;
+            } else {
+                existingRecipientSection.style.display = 'block';
+                newRecipientSection.style.display = 'none';
+                document.getElementById('recipient_id').required = true;
+                document.getElementById('new_recipient_first_name').required = false;
+                document.getElementById('new_recipient_last_name').required = false;
+                document.getElementById('new_recipient_hospital').required = false;
+                document.getElementById('new_recipient_blood_group').required = false;
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeTransfusionModal();
+            }
+        }
+    </script>
+    {% endif %}
 {% endblock %}
 
 
