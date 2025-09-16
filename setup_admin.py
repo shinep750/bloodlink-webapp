@@ -50,4 +50,3 @@ def setup_admin_user():
 if __name__ == '__main__':
     setup_admin_user()
 
-
