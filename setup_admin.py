@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash
 # This script securely resets the admin password for the LOCAL database.
 
 # ==> CONFIGURATION <==
+# It reads the same environment variables as your main app.
 DB_NAME = os.environ.get('DB_NAME')
 DB_USER = os.environ.get('DB_USER')
 DB_PASS = os.environ.get('DB_PASS')
@@ -27,7 +28,6 @@ def setup_admin_user():
         print("Creating new admin user with username 'admin' and password 'password'...")
         password_hash = generate_password_hash('password')
         
-        # THE FIX: This command now matches the final database schema
         cur.execute(
             "INSERT INTO Staff (username, password_hash, full_name, is_admin, must_change_password, secret_code) VALUES (%s, %s, %s, %s, %s, %s);",
             ('admin', password_hash, 'Admin User', True, True, 'ADMIN_LOCAL_CODE')
@@ -40,10 +40,9 @@ def setup_admin_user():
         print("\nSUCCESS: The local admin user has been reset successfully.")
         print("You can now run your main application and log in locally.")
 
-    except psycopg2.OperationalError as e:
+    except psycopg2.OperationalError:
         print(f"\nERROR: Could not connect to the database.")
         print(f"Please make sure your environment variables (DB_HOST, DB_USER, DB_PASS, DB_NAME) are set correctly.")
-        print(f"Details: {e}")
     except Exception as e:
         print(f"\nAn unexpected error occurred: {e}")
 

@@ -45,7 +45,7 @@ def load_user(user_id):
             id=user['staff_id'],
             username=user['username'],
             full_name=user['full_name'],
-            is_admin=user['is_admin'],
+            is_admin=user.get('is_admin', False),
             must_change_password=user.get('must_change_password', False)
         )
     return None
@@ -122,7 +122,7 @@ def handle_login_attempt(is_admin_login):
             id=user['staff_id'],
             username=user['username'],
             full_name=user['full_name'],
-            is_admin=user['is_admin'],
+            is_admin=user.get('is_admin', False),
             must_change_password=user.get('must_change_password', False)
         )
         login_user(staff_member)
@@ -256,6 +256,9 @@ def index():
 @app.route('/donors')
 @login_required
 def view_donors():
+    if getattr(current_user, 'is_admin', False):
+        flash("Admins do not have access to this page.", "error")
+        return redirect(url_for('index'))
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute("SELECT donor_id, first_name, last_name, blood_group, contact_number FROM Donors ORDER BY first_name;")
@@ -267,6 +270,9 @@ def view_donors():
 @app.route('/donor/<int:donor_id>')
 @login_required
 def view_donor_detail(donor_id):
+    if getattr(current_user, 'is_admin', False):
+        flash("Admins do not have access to this page.", "error")
+        return redirect(url_for('index'))
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute("SELECT * FROM Donors WHERE donor_id = %s;", (donor_id,))
@@ -284,6 +290,7 @@ def add_donor():
         flash("Admins cannot perform this action.", "error")
         return redirect(url_for('index'))
     if request.method == 'POST':
+        # ... (rest of the add_donor logic)
         first_name = request.form['first_name']
         last_name = request.form['last_name']
         blood_group = request.form['blood_group']
@@ -316,6 +323,7 @@ def add_inventory():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     if request.method == 'POST':
+        # ... (rest of the add_inventory logic)
         donor_id = request.form['donor_id']
         bank_id = request.form['bank_id']
         donation_date_str = request.form['donation_date']
