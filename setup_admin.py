@@ -81,4 +81,3 @@ The script will give you a clear message in the terminal.
 ```bash
 (venv) gunicorn --bind 0.0.0.0:5001 --reload app:app
 
-
