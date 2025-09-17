@@ -143,7 +143,7 @@
             align-items: center;
             gap: 1rem;
         }
-        
+
         /* Mobile Menu Styles */
         .menu-toggle { display: none; }
         .mobile-nav { display: none; }
@@ -294,7 +294,7 @@
         </ul>
 
         <div class="navbar-right">
-            <!-- THE FIX: The Add dropdown is now permanently removed -->
+            <!-- THE FIX: The Add dropdown button is now completely removed -->
             <div class="user-actions">
                 {% if current_user.is_admin %}
                     <a href="{{ url_for('profile') }}" class="user-info" style="color: white; text-decoration: none;">Welcome, {{ current_user.full_name }}</a>
@@ -319,7 +319,6 @@
             <li><a href="{{ url_for('manage_users') }}">Admin</a></li>
         {% endif %}
         {% if current_user.is_authenticated %}
-            <!-- Add buttons will be on their respective pages -->
             {% if current_user.is_admin %}
                 <li><a href="{{ url_for('profile') }}">My Profile</a></li>
             {% endif %}
