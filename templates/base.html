@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
     <style>
-        /* All CSS remains the same as the final polished version */
         :root {
             --primary-color: #c81e1e;
             --dark-bg: #1a1a1a;
@@ -25,15 +24,14 @@
             background-color: var(--dark-bg);
             color: var(--text-color);
             margin: 0;
-            padding-top: 80px;
             line-height: 1.6;
             background-size: cover;
             background-position: center center;
             background-attachment: fixed;
             position: relative;
         }
-        body.login-page {
-            padding-top: 0;
+        body.logged-in {
+             padding-top: 80px;
         }
         body::before {
             content: '';
@@ -60,6 +58,7 @@
             padding: 0 1.5rem;
         }
 
+        /* Navbar */
         .navbar {
             background-color: var(--primary-color);
             padding: 0 1.5rem;
@@ -144,40 +143,7 @@
             align-items: center;
             gap: 1rem;
         }
-
-        .dropdown-container {
-            position: relative;
-        }
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            top: calc(100% + 5px);
-            right: 0;
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.5rem 0;
-            min-width: 200px;
-            z-index: 110;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-        }
-        .dropdown-menu.active {
-            display: block;
-        }
-        .dropdown-menu a {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1.25rem;
-            color: white;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-        .dropdown-menu a:hover {
-            background-color: rgba(255,255,255,0.1);
-        }
-
+        
         /* Mobile Menu Styles */
         .menu-toggle { display: none; }
         .mobile-nav { display: none; }
@@ -256,6 +222,16 @@
             text-decoration: underline;
         }
         
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .page-header h1 {
+            margin: 0;
+        }
+
         .card, table, .filter-card, .form-container { background: var(--card-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color); box-shadow: 0 4px 20px rgba(0,0,0,0.2); color: var(--text-color); }
         h1, h2, h3 { color: white; margin-top: 0; }
         table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
@@ -295,6 +271,7 @@
             .dashboard-grid, .reports-grid { grid-template-columns: 1fr; }
             .container { padding: 0 1rem; }
             table { display: block; overflow-x: auto; }
+            .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
         }
     </style>
 </head>
@@ -317,19 +294,8 @@
         </ul>
 
         <div class="navbar-right">
-            {% if not current_user.is_admin %}
-            <div class="dropdown-container" id="add-dropdown">
-                <button type="button" class="btn btn-primary" id="add-dropdown-button">
-                    <i class="fa-solid fa-plus"></i> Add
-                </button>
-                <div class="dropdown-menu" id="add-dropdown-menu">
-                    <a href="{{ url_for('add_inventory') }}"><i class="fa-solid fa-syringe"></i> Add Inventory</a>
-                    <a href="{{ url_for('add_donor') }}"><i class="fa-solid fa-user-plus"></i> Add Donor</a>
-                </div>
-            </div>
-            {% endif %}
+            <!-- THE FIX: The Add dropdown is now permanently removed -->
             <div class="user-actions">
-                <!-- THE FIX: Only admins can see the profile link -->
                 {% if current_user.is_admin %}
                     <a href="{{ url_for('profile') }}" class="user-info" style="color: white; text-decoration: none;">Welcome, {{ current_user.full_name }}</a>
                 {% else %}
@@ -352,14 +318,13 @@
         {% if current_user.is_admin %}
             <li><a href="{{ url_for('manage_users') }}">Admin</a></li>
         {% endif %}
-        {% if not current_user.is_admin %}
-        <li><a href="{{ url_for('add_inventory') }}">Add Inventory</a></li>
-        <li><a href="{{ url_for('add_donor') }}">Add Donor</a></li>
+        {% if current_user.is_authenticated %}
+            <!-- Add buttons will be on their respective pages -->
+            {% if current_user.is_admin %}
+                <li><a href="{{ url_for('profile') }}">My Profile</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('logout') }}">Logout ({{ current_user.full_name }})</a></li>
         {% endif %}
-        {% if current_user.is_admin %}
-            <li><a href="{{ url_for('profile') }}">My Profile</a></li>
-        {% endif %}
-        <li><a href="{{ url_for('logout') }}">Logout ({{ current_user.full_name }})</a></li>
     </ul>
     {% endif %}
 
@@ -397,26 +362,9 @@
                     mobileMenu.classList.toggle('active');
                 });
             }
-
-            // Dropdown Menu Logic
-            const dropdownButton = document.getElementById('add-dropdown-button');
-            const dropdownMenu = document.getElementById('add-dropdown-menu');
-            if (dropdownButton) {
-                dropdownButton.addEventListener('click', function(event) {
-                    event.stopPropagation();
-                    dropdownMenu.classList.toggle('active');
-                });
-            }
-
-            window.addEventListener('click', function(event) {
-                if (dropdownMenu && dropdownMenu.classList.contains('active') && !dropdownButton.contains(event.target)) {
-                    dropdownMenu.classList.remove('active');
-                }
-            });
         });
     </script>
     {% endblock %}
 </body>
 </html>
-
 
