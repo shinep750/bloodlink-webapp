@@ -253,12 +253,10 @@ def index():
     conn.close()
     return render_template('index.html', stats=stats, critical_shortages=critical_shortages, expiring_soon=expiring_soon)
     
+# --- THE FIX: Admins can now VIEW donors ---
 @app.route('/donors')
 @login_required
 def view_donors():
-    if getattr(current_user, 'is_admin', False):
-        flash("Admins do not have access to this page.", "error")
-        return redirect(url_for('index'))
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute("SELECT donor_id, first_name, last_name, blood_group, contact_number FROM Donors ORDER BY first_name;")
@@ -267,12 +265,10 @@ def view_donors():
     conn.close()
     return render_template('donors.html', donors=donors)
 
+# --- THE FIX: Admins can now VIEW donor details ---
 @app.route('/donor/<int:donor_id>')
 @login_required
 def view_donor_detail(donor_id):
-    if getattr(current_user, 'is_admin', False):
-        flash("Admins do not have access to this page.", "error")
-        return redirect(url_for('index'))
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute("SELECT * FROM Donors WHERE donor_id = %s;", (donor_id,))
@@ -290,7 +286,6 @@ def add_donor():
         flash("Admins cannot perform this action.", "error")
         return redirect(url_for('index'))
     if request.method == 'POST':
-        # ... (rest of the add_donor logic)
         first_name = request.form['first_name']
         last_name = request.form['last_name']
         blood_group = request.form['blood_group']
@@ -323,7 +318,6 @@ def add_inventory():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     if request.method == 'POST':
-        # ... (rest of the add_inventory logic)
         donor_id = request.form['donor_id']
         bank_id = request.form['bank_id']
         donation_date_str = request.form['donation_date']
@@ -430,5 +424,4 @@ def view_reports():
     cur.close()
     conn.close()
     return render_template('reports.html', inventory_chart_data=inventory_chart_data, monthly_chart_data=monthly_chart_data, eligible_donors=eligible_donors)
-
 
