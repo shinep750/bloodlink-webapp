@@ -28,6 +28,7 @@ def setup_admin_user():
         print("Creating new admin user with username 'admin' and password 'password'...")
         password_hash = generate_password_hash('password')
         
+        # THE FIX: This command now matches the final database schema
         cur.execute(
             "INSERT INTO Staff (username, password_hash, full_name, is_admin, must_change_password, secret_code) VALUES (%s, %s, %s, %s, %s, %s);",
             ('admin', password_hash, 'Admin User', True, True, 'ADMIN_LOCAL_CODE')
@@ -40,13 +41,44 @@ def setup_admin_user():
         print("\nSUCCESS: The local admin user has been reset successfully.")
         print("You can now run your main application and log in locally.")
 
-    except psycopg2.OperationalError:
+    except psycopg2.OperationalError as e:
         print(f"\nERROR: Could not connect to the database.")
         print(f"Please make sure your environment variables (DB_HOST, DB_USER, DB_PASS, DB_NAME) are set correctly.")
+        print(f"Details: {e}")
     except Exception as e:
         print(f"\nAn unexpected error occurred: {e}")
 
 if __name__ == '__main__':
     setup_admin_user()
+```
+
+#### Step 2: Run the Corrected Script
+Now, we will run this new, corrected script from your terminal. This will automatically fix your database.
+
+1.  **Open a clean terminal window.**
+2.  Navigate to your project folder: `cd ~/Desktop/bloodlink_webapp`
+3.  Activate your virtual environment: `source venv/bin/activate`
+4.  **Set your environment variables.** This is the most important step.
+    ```bash
+    export DB_HOST="localhost"
+    export DB_USER="shine"
+    export DB_PASS="shinepass"
+    export DB_NAME="bloodlink_db"
+    ```
+5.  **Run the new script:**
+    ```bash
+    (venv) python3 setup_admin.py
+    ```
+
+#### Step 3: Check the Output
+The script will give you a clear message in the terminal.
+* If you see **`SUCCESS: The local admin user has been reset successfully.`**, then the problem is permanently fixed!
+* If you see an **`ERROR`**, it means your environment variables are incorrect. Please double-check them and run the script again.
+
+#### Step 4: Run Your Main Application
+**After** you see the "SUCCESS" message from the setup script, you can now run your main application with Gunicorn.
+
+```bash
+(venv) gunicorn --bind 0.0.0.0:5001 --reload app:app
 
 
