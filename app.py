@@ -109,7 +109,7 @@ def handle_login_attempt(is_admin_login):
         username = request.form['username']
         cur.execute("SELECT * FROM Staff WHERE username = %s AND is_admin = TRUE;", (username,))
         user = cur.fetchone()
-    else:
+    else: # Staff login
         secret_code = request.form['secret_code']
         cur.execute("SELECT * FROM Staff WHERE secret_code = %s AND is_admin = FALSE;", (secret_code,))
         user = cur.fetchone()
@@ -274,7 +274,7 @@ def index():
     if not conn:
         return render_template('error.html', message="Could not connect to the database.")
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    # ... (rest of the index logic)
+    # ... (rest of the index logic is correct)
     cur.execute("SELECT COUNT(*) FROM Donors;")
     total_donors = cur.fetchone()[0]
     cur.execute("SELECT COUNT(*) FROM BloodInventory WHERE status = 'Available';")
