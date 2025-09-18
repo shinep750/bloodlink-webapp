@@ -161,12 +161,16 @@ def profile():
             flash('Your current password was incorrect.', 'error')
         else:
             new_password_hash = generate_password_hash(new_password)
-            cur.execute("UPDATE Staff SET password_hash = %s, must_change_password = FALSE WHERE staff_id = %s;", (new_password_hash, current_user.id))
+            cur.execute(
+                "UPDATE Staff SET password_hash = %s, must_change_password = FALSE WHERE staff_id = %s;",
+                (new_password_hash, current_user.id)
+            )
             conn.commit()
             flash('Your password has been updated successfully! You now have full access.', 'success')
-            cur.close()
-            conn.close()
-            return redirect(url_for('index'))
+
+        cur.close()
+        conn.close()
+        return redirect(url_for('index'))
 
     return render_template('profile.html')
 
@@ -197,13 +201,16 @@ def add_user():
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute("INSERT INTO Staff (username, password_hash, full_name, is_admin, secret_code, must_change_password) VALUES (%s, %s, %s, %s, %s, %s);",
-                    (username, password_hash, full_name, is_admin, secret_code if not is_admin else None, is_admin))
+        cur.execute(
+            "INSERT INTO Staff (username, password_hash, full_name, is_admin, secret_code, must_change_password) "
+            "VALUES (%s, %s, %s, %s, %s, %s);",
+            (username, password_hash, full_name, is_admin, secret_code if not is_admin else None, is_admin)
+        )
         conn.commit()
-        flash(f'User \"{username}\" created successfully!', 'success')
+        flash(f'User "{username}" created successfully!', 'success')
     except errors.UniqueViolation:
         conn.rollback()
-        flash(f'Error: Username or Secret Code already exists.', 'error')
+        flash('Error: Username or Secret Code already exists.', 'error')
     finally:
         cur.close()
         conn.close()
@@ -235,17 +242,17 @@ def edit_user(staff_id):
         try:
             if password.strip():
                 password_hash = generate_password_hash(password)
-                cur.execute("""
-                    UPDATE Staff
-                    SET full_name = %s, username = %s, secret_code = %s, is_admin = %s, password_hash = %s
-                    WHERE staff_id = %s;
-                """, (full_name, username, secret_code if not is_admin else None, is_admin, password_hash, staff_id))
+                cur.execute(
+                    "UPDATE Staff SET full_name = %s, username = %s, secret_code = %s, is_admin = %s, password_hash = %s "
+                    "WHERE staff_id = %s;",
+                    (full_name, username, secret_code if not is_admin else None, is_admin, password_hash, staff_id)
+                )
             else:
-                cur.execute("""
-                    UPDATE Staff
-                    SET full_name = %s, username = %s, secret_code = %s, is_admin = %s
-                    WHERE staff_id = %s;
-                """, (full_name, username, secret_code if not is_admin else None, is_admin, staff_id))
+                cur.execute(
+                    "UPDATE Staff SET full_name = %s, username = %s, secret_code = %s, is_admin = %s "
+                    "WHERE staff_id = %s;",
+                    (full_name, username, secret_code if not is_admin else None, is_admin, staff_id)
+                )
 
             conn.commit()
             flash("User updated successfully.", "success")
@@ -284,25 +291,44 @@ def index():
     conn = get_db_connection()
     if not conn:
         return "<h1>Error: Could not connect to the database. Please check server logs.</h1>"
+
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cur.execute(\"SELECT COUNT(*) FROM Donors;\")
+
+    cur.execute("SELECT COUNT(*) FROM Donors;")
     total_donors = cur.fetchone()[0]
-    cur.execute(\"SELECT COUNT(*) FROM BloodInventory WHERE status = 'Available';\")
+
+    cur.execute("SELECT COUNT(*) FROM BloodInventory WHERE status = 'Available';")
     available_bags = cur.fetchone()[0]
-    cur.execute(\"SELECT COUNT(*) FROM BloodTransfusions;\")
+
+    cur.execute("SELECT COUNT(*) FROM BloodTransfusions;")
     total_transfusions = cur.fetchone()[0]
+
     stats = {
         'total_donors': total_donors,
         'available_bags': available_bags,
         'total_transfusions': total_transfusions
     }
-    cur.execute(\"SELECT blood_group FROM BloodInventory WHERE status = 'Available' GROUP BY blood_group HAVING COUNT(bag_id) < 3;\")
+
+    cur.execute(
+        "SELECT blood_group FROM BloodInventory "
+        "WHERE status = 'Available' "
+        "GROUP BY blood_group "
+        "HAVING COUNT(bag_id) < 3;"
+    )
     shortages_rows = cur.fetchall()
     critical_shortages = [row['blood_group'] for row in shortages_rows]
-    cur.execute(\"SELECT bi.bag_id, bi.blood_group, bb.bank_name, bi.expiry_date FROM BloodInventory bi JOIN BloodBanks bb ON bi.bank_id = bb.bank_id WHERE bi.status = 'Available' AND bi.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '14 days' ORDER BY bi.expiry_date ASC;\")
+
+    cur.execute(
+        "SELECT bi.bag_id, bi.blood_group, bb.bank_name, bi.expiry_date "
+        "FROM BloodInventory bi "
+        "JOIN BloodBanks bb ON bi.bank_id = bb.bank_id "
+        "WHERE bi.status = 'Available' "
+        "AND bi.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '14 days' "
+        "ORDER BY bi.expiry_date ASC;"
+    )
     expiring_soon = cur.fetchall()
+
     cur.close()
     conn.close()
-    return render_template('index.html', stats=stats, critical_shortages=critical_shortages, expiring_soon=expiring_soon)
 
-# (other routes unchanged below...)
+    return render_template('index.html', stats=stats, critical_shortages=critical_shortages, expiring_soon=expiring_soon)
