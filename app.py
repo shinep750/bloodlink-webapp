@@ -161,13 +161,9 @@ def profile():
             flash('Your current password was incorrect.', 'error')
         else:
             new_password_hash = generate_password_hash(new_password)
-            cur.execute(
-                "UPDATE Staff SET password_hash = %s, must_change_password = FALSE WHERE staff_id = %s;",
-                (new_password_hash, current_user.id)
-            )
+            cur.execute("UPDATE Staff SET password_hash = %s, must_change_password = FALSE WHERE staff_id = %s;", (new_password_hash, current_user.id))
             conn.commit()
             flash('Your password has been updated successfully! You now have full access.', 'success')
-
         cur.close()
         conn.close()
         return redirect(url_for('index'))
@@ -201,11 +197,8 @@ def add_user():
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute(
-            "INSERT INTO Staff (username, password_hash, full_name, is_admin, secret_code, must_change_password) "
-            "VALUES (%s, %s, %s, %s, %s, %s);",
-            (username, password_hash, full_name, is_admin, secret_code if not is_admin else None, is_admin)
-        )
+        cur.execute("INSERT INTO Staff (username, password_hash, full_name, is_admin, secret_code, must_change_password) VALUES (%s, %s, %s, %s, %s, %s);",
+                    (username, password_hash, full_name, is_admin, secret_code if not is_admin else None, is_admin))
         conn.commit()
         flash(f'User "{username}" created successfully!', 'success')
     except errors.UniqueViolation:
@@ -242,17 +235,17 @@ def edit_user(staff_id):
         try:
             if password.strip():
                 password_hash = generate_password_hash(password)
-                cur.execute(
-                    "UPDATE Staff SET full_name = %s, username = %s, secret_code = %s, is_admin = %s, password_hash = %s "
-                    "WHERE staff_id = %s;",
-                    (full_name, username, secret_code if not is_admin else None, is_admin, password_hash, staff_id)
-                )
+                cur.execute("""
+                    UPDATE Staff
+                    SET full_name = %s, username = %s, secret_code = %s, is_admin = %s, password_hash = %s
+                    WHERE staff_id = %s;
+                """, (full_name, username, secret_code if not is_admin else None, is_admin, password_hash, staff_id))
             else:
-                cur.execute(
-                    "UPDATE Staff SET full_name = %s, username = %s, secret_code = %s, is_admin = %s "
-                    "WHERE staff_id = %s;",
-                    (full_name, username, secret_code if not is_admin else None, is_admin, staff_id)
-                )
+                cur.execute("""
+                    UPDATE Staff
+                    SET full_name = %s, username = %s, secret_code = %s, is_admin = %s
+                    WHERE staff_id = %s;
+                """, (full_name, username, secret_code if not is_admin else None, is_admin, staff_id))
 
             conn.commit()
             flash("User updated successfully.", "success")
@@ -291,44 +284,104 @@ def index():
     conn = get_db_connection()
     if not conn:
         return "<h1>Error: Could not connect to the database. Please check server logs.</h1>"
-
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
     cur.execute("SELECT COUNT(*) FROM Donors;")
     total_donors = cur.fetchone()[0]
-
     cur.execute("SELECT COUNT(*) FROM BloodInventory WHERE status = 'Available';")
     available_bags = cur.fetchone()[0]
-
     cur.execute("SELECT COUNT(*) FROM BloodTransfusions;")
     total_transfusions = cur.fetchone()[0]
-
     stats = {
         'total_donors': total_donors,
         'available_bags': available_bags,
         'total_transfusions': total_transfusions
     }
-
-    cur.execute(
-        "SELECT blood_group FROM BloodInventory "
-        "WHERE status = 'Available' "
-        "GROUP BY blood_group "
-        "HAVING COUNT(bag_id) < 3;"
-    )
+    cur.execute("SELECT blood_group FROM BloodInventory WHERE status = 'Available' GROUP BY blood_group HAVING COUNT(bag_id) < 3;")
     shortages_rows = cur.fetchall()
     critical_shortages = [row['blood_group'] for row in shortages_rows]
-
-    cur.execute(
-        "SELECT bi.bag_id, bi.blood_group, bb.bank_name, bi.expiry_date "
-        "FROM BloodInventory bi "
-        "JOIN BloodBanks bb ON bi.bank_id = bb.bank_id "
-        "WHERE bi.status = 'Available' "
-        "AND bi.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '14 days' "
-        "ORDER BY bi.expiry_date ASC;"
-    )
+    cur.execute("SELECT bi.bag_id, bi.blood_group, bb.bank_name, bi.expiry_date FROM BloodInventory bi JOIN BloodBanks bb ON bi.bank_id = bb.bank_id WHERE bi.status = 'Available' AND bi.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '14 days' ORDER BY bi.expiry_date ASC;")
     expiring_soon = cur.fetchall()
-
     cur.close()
     conn.close()
-
     return render_template('index.html', stats=stats, critical_shortages=critical_shortages, expiring_soon=expiring_soon)
+
+# --- Inventory Routes ---
+@app.route('/inventory')
+@login_required
+def view_inventory():
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute("SELECT bi.bag_id, bi.blood_group, bb.bank_name, bi.status, bi.expiry_date FROM BloodInventory bi JOIN BloodBanks bb ON bi.bank_id = bb.bank_id ORDER BY bi.expiry_date ASC;")
+    inventory = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('inventory.html', inventory=inventory)
+
+@app.route('/inventory/add', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def add_inventory():
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    if request.method == 'POST':
+        blood_group = request.form['blood_group']
+        bank_id = request.form['bank_id']
+        expiry_date = request.form['expiry_date']
+        cur.execute("INSERT INTO BloodInventory (blood_group, bank_id, expiry_date, status) VALUES (%s, %s, %s, 'Available');", (blood_group, bank_id, expiry_date))
+        conn.commit()
+        flash("Blood bag added successfully.", "success")
+        cur.close()
+        conn.close()
+        return redirect(url_for('view_inventory'))
+    cur.execute("SELECT bank_id, bank_name FROM BloodBanks ORDER BY bank_name;")
+    banks = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('add_inventory.html', banks=banks)
+
+@app.route('/inventory/edit/<int:bag_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_inventory(bag_id):
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute("SELECT * FROM BloodInventory WHERE bag_id = %s;", (bag_id,))
+    bag = cur.fetchone()
+    if not bag:
+        flash("Blood bag not found.", "error")
+        cur.close()
+        conn.close()
+        return redirect(url_for('view_inventory'))
+    if request.method == 'POST':
+        blood_group = request.form['blood_group']
+        bank_id = request.form['bank_id']
+        expiry_date = request.form['expiry_date']
+        status = request.form['status']
+        cur.execute("UPDATE BloodInventory SET blood_group=%s, bank_id=%s, expiry_date=%s, status=%s WHERE bag_id=%s;", (blood_group, bank_id, expiry_date, status, bag_id))
+        conn.commit()
+        flash("Blood bag updated successfully.", "success")
+        cur.close()
+        conn.close()
+        return redirect(url_for('view_inventory'))
+    cur.execute("SELECT bank_id, bank_name FROM BloodBanks ORDER BY bank_name;")
+    banks = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('edit_inventory.html', bag=bag, banks=banks)
+
+@app.route('/inventory/delete/<int:bag_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_inventory(bag_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM BloodInventory WHERE bag_id=%s;", (bag_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    flash("Blood bag deleted successfully.", "success")
+    return redirect(url_for('view_inventory'))
+
+# --- Run App ---
+if __name__ == '__main__':
+    app.run(debug=True)
