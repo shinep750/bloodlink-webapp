@@ -1,15 +1,19 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <!-- THE FIX: New page header with contextual Add button -->
+    <!-- Page Header -->
     <div class="page-header">
         <h1>Registered Donors</h1>
+        <!-- Only non-admins can add donors -->
         {% if not current_user.is_admin %}
-            <a href="{{ url_for('add_donor') }}" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Add Donor</a>
+            <a href="{{ url_for('add_donor') }}" class="btn btn-primary">
+                <i class="fa-solid fa-user-plus"></i> Add Donor
+            </a>
         {% endif %}
     </div>
 
-    <table>
+    <!-- Donors Table -->
+    <table class="table table-striped">
         <thead>
             <tr>
                 <th>Name</th>
@@ -20,7 +24,11 @@
         <tbody>
             {% for donor in donors %}
             <tr>
-                <td><a href="{{ url_for('view_donor_detail', donor_id=donor.donor_id) }}" style="color: white;">{{ donor.first_name }} {{ donor.last_name }}</a></td>
+                <td>
+                    <a href="{{ url_for('view_donor_detail', donor_id=donor.donor_id) }}" style="color: white;">
+                        {{ donor.first_name }} {{ donor.last_name }}
+                    </a>
+                </td>
                 <td>{{ donor.blood_group }}</td>
                 <td>{{ donor.contact_number }}</td>
             </tr>
@@ -32,5 +40,3 @@
         </tbody>
     </table>
 {% endblock %}
-
-
