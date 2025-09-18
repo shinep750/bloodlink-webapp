@@ -200,7 +200,7 @@ def add_user():
         cur.execute("INSERT INTO Staff (username, password_hash, full_name, is_admin, secret_code, must_change_password) VALUES (%s, %s, %s, %s, %s, %s);",
                     (username, password_hash, full_name, is_admin, secret_code if not is_admin else None, is_admin))
         conn.commit()
-        flash(f'User \"{username}\" created successfully!', 'success')
+        flash(f'User "{username}" created successfully!', 'success')
     except errors.UniqueViolation:
         conn.rollback()
         flash(f'Error: Username or Secret Code already exists.', 'error')
@@ -208,58 +208,6 @@ def add_user():
         cur.close()
         conn.close()
     return redirect(url_for('manage_users'))
-
-@app.route('/admin/users/edit/<int:staff_id>', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def edit_user(staff_id):
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    cur.execute("SELECT * FROM Staff WHERE staff_id = %s;", (staff_id,))
-    user = cur.fetchone()
-
-    if not user:
-        flash("User not found.", "error")
-        cur.close()
-        conn.close()
-        return redirect(url_for('manage_users'))
-
-    if request.method == 'POST':
-        full_name = request.form['full_name']
-        username = request.form.get('username')
-        secret_code = request.form.get('secret_code')
-        password = request.form.get('password')
-        is_admin = 'is_admin' in request.form
-
-        try:
-            if password.strip():
-                password_hash = generate_password_hash(password)
-                cur.execute("""
-                    UPDATE Staff
-                    SET full_name = %s, username = %s, secret_code = %s, is_admin = %s, password_hash = %s
-                    WHERE staff_id = %s;
-                """, (full_name, username, secret_code if not is_admin else None, is_admin, password_hash, staff_id))
-            else:
-                cur.execute("""
-                    UPDATE Staff
-                    SET full_name = %s, username = %s, secret_code = %s, is_admin = %s
-                    WHERE staff_id = %s;
-                """, (full_name, username, secret_code if not is_admin else None, is_admin, staff_id))
-
-            conn.commit()
-            flash("User updated successfully.", "success")
-        except Exception as e:
-            conn.rollback()
-            flash(f"Error updating user: {e}", "error")
-        finally:
-            cur.close()
-            conn.close()
-        return redirect(url_for('manage_users'))
-
-    cur.close()
-    conn.close()
-    return render_template('edit_user.html', user=user)
 
 @app.route('/admin/users/delete/<int:staff_id>', methods=['POST'])
 @login_required
@@ -277,62 +225,6 @@ def delete_user(staff_id):
     flash("Staff user deleted successfully.", "success")
     return redirect(url_for('manage_users'))
 
-# --- Donor Routes ---
-@app.route('/donors')
-@login_required
-def donors():
-    conn = get_db_connection()
-    if not conn:
-        flash("Database connection error.", "error")
-        return redirect(url_for('index'))
-
-    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cur.execute("SELECT * FROM Donors ORDER BY first_name, last_name;")
-    donor_list = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    return render_template('donors.html', donors=donor_list)
-
-@app.route('/donors/add', methods=['GET', 'POST'])
-@login_required
-def add_donor():
-    if current_user.is_admin:
-        flash("Admins cannot add donors.", "error")
-        return redirect(url_for('donors'))
-
-    if request.method == 'POST':
-        first_name = request.form['first_name']
-        last_name = request.form['last_name']
-        blood_group = request.form['blood_group']
-        contact_number = request.form['contact_number']
-
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("INSERT INTO Donors (first_name, last_name, blood_group, contact_number) VALUES (%s, %s, %s, %s);",
-                    (first_name, last_name, blood_group, contact_number))
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        flash("Donor added successfully!", "success")
-        return redirect(url_for('donors'))
-
-    return render_template('add_donor.html')
-
-# --- Placeholder routes for menu links ---
-@app.route('/inventory')
-@login_required
-def view_inventory():
-    # Placeholder: implement inventory logic
-    return "<h1>Inventory Page (Coming Soon)</h1>"
-
-@app.route('/reports')
-@login_required
-def view_reports():
-    # Placeholder: implement reports logic
-    return "<h1>Reports Page (Coming Soon)</h1>"
-
 # --- Standard Application Routes ---
 @app.route('/')
 @login_required
@@ -340,7 +232,6 @@ def index():
     conn = get_db_connection()
     if not conn:
         return "<h1>Error: Could not connect to the database. Please check server logs.</h1>"
-
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute("SELECT COUNT(*) FROM Donors;")
     total_donors = cur.fetchone()[0]
@@ -348,27 +239,187 @@ def index():
     available_bags = cur.fetchone()[0]
     cur.execute("SELECT COUNT(*) FROM BloodTransfusions;")
     total_transfusions = cur.fetchone()[0]
-
     stats = {
         'total_donors': total_donors,
         'available_bags': available_bags,
         'total_transfusions': total_transfusions
     }
-
     cur.execute("SELECT blood_group FROM BloodInventory WHERE status = 'Available' GROUP BY blood_group HAVING COUNT(bag_id) < 3;")
     shortages_rows = cur.fetchall()
     critical_shortages = [row['blood_group'] for row in shortages_rows]
-
-    cur.execute("""SELECT bi.bag_id, bi.blood_group, bb.bank_name, bi.expiry_date
-                   FROM BloodInventory bi
-                   JOIN BloodBanks bb ON bi.bank_id = bb.bank_id
-                   WHERE bi.status = 'Available' AND bi.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '14 days'
-                   ORDER BY bi.expiry_date ASC;""")
+    cur.execute("SELECT bi.bag_id, bi.blood_group, bb.bank_name, bi.expiry_date FROM BloodInventory bi JOIN BloodBanks bb ON bi.bank_id = bb.bank_id WHERE bi.status = 'Available' AND bi.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '14 days' ORDER BY bi.expiry_date ASC;")
     expiring_soon = cur.fetchall()
-
     cur.close()
     conn.close()
     return render_template('index.html', stats=stats, critical_shortages=critical_shortages, expiring_soon=expiring_soon)
+    
+@app.route('/donors')
+@login_required
+def view_donors():
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute("SELECT donor_id, first_name, last_name, blood_group, contact_number FROM Donors ORDER BY first_name;")
+    donors = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('donors.html', donors=donors)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/donor/<int:donor_id>')
+@login_required
+def view_donor_detail(donor_id):
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute("SELECT * FROM Donors WHERE donor_id = %s;", (donor_id,))
+    donor = cur.fetchone()
+    cur.execute("SELECT bi.donation_date, bi.status, bb.bank_name FROM BloodInventory bi JOIN BloodBanks bb ON bi.bank_id = bb.bank_id WHERE bi.donor_id = %s ORDER BY bi.donation_date DESC;", (donor_id,))
+    donations = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('donor_detail.html', donor=donor, donations=donations)
+
+@app.route('/add_donor', methods=['GET', 'POST'])
+@login_required
+def add_donor():
+    if getattr(current_user, 'is_admin', False):
+        flash("Admins cannot perform this action.", "error")
+        return redirect(url_for('index'))
+    if request.method == 'POST':
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        blood_group = request.form['blood_group']
+        contact_number = request.form['contact_number']
+        email = request.form['email']
+        address = request.form['address']
+        date_of_birth = request.form['date_of_birth']
+        conn = get_db_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("INSERT INTO Donors (first_name, last_name, blood_group, contact_number, email, address, date_of_birth) VALUES (%s, %s, %s, %s, %s, %s, %s);",
+                        (first_name, last_name, blood_group, contact_number, email, address, date_of_birth))
+            conn.commit()
+            flash('Donor added successfully!', 'success')
+        except errors.UniqueViolation:
+            conn.rollback()
+            flash('Error: A donor with that contact number or email already exists.', 'error')
+        finally:
+            cur.close()
+            conn.close()
+        return redirect(url_for('view_donors'))
+    return render_template('add_donor.html')
+    
+@app.route('/add_inventory', methods=['GET', 'POST'])
+@login_required
+def add_inventory():
+    if getattr(current_user, 'is_admin', False):
+        flash("Admins cannot perform this action.", "error")
+        return redirect(url_for('index'))
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    if request.method == 'POST':
+        donor_id = request.form['donor_id']
+        bank_id = request.form['bank_id']
+        donation_date_str = request.form['donation_date']
+        donation_date = datetime.strptime(donation_date_str, '%Y-%m-%d').date()
+        expiry_date = donation_date + timedelta(days=42)
+        cur.execute("SELECT blood_group FROM Donors WHERE donor_id = %s;", (donor_id,))
+        blood_group = cur.fetchone()['blood_group']
+        cur.execute("INSERT INTO BloodInventory (donor_id, bank_id, blood_group, donation_date, expiry_date) VALUES (%s, %s, %s, %s, %s);",
+                    (donor_id, bank_id, blood_group, donation_date, expiry_date))
+        cur.execute("UPDATE Donors SET last_donation_date = %s WHERE donor_id = %s;", (donation_date, donor_id))
+        conn.commit()
+        flash('Blood bag added to inventory!', 'success')
+        cur.close()
+        conn.close()
+        return redirect(url_for('view_inventory'))
+    cur.execute("SELECT donor_id, first_name, last_name FROM Donors ORDER BY last_name, first_name;")
+    donors = cur.fetchall()
+    cur.execute("SELECT bank_id, bank_name FROM BloodBanks ORDER BY bank_name;")
+    banks = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('add_inventory.html', donors=donors, banks=banks)
+
+@app.route('/inventory')
+@login_required
+def view_inventory():
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    search_group = request.args.get('blood_group', '')
+    search_bank = request.args.get('bank_id', '')
+    query = "SELECT bi.bag_id, bi.blood_group, bi.donation_date, bi.expiry_date, d.first_name || ' ' || d.last_name as donor_name, bb.bank_name FROM BloodInventory bi JOIN Donors d ON bi.donor_id = d.donor_id JOIN BloodBanks bb ON bi.bank_id = bb.bank_id WHERE bi.status = 'Available'"
+    params = []
+    if search_group:
+        query += " AND bi.blood_group = %s"
+        params.append(search_group)
+    if search_bank:
+        query += " AND bi.bank_id = %s"
+        params.append(search_bank)
+    query += " ORDER BY bi.expiry_date ASC;"
+    cur.execute(query, tuple(params))
+    inventory = cur.fetchall()
+    cur.execute("SELECT * FROM BloodBanks ORDER BY bank_name;")
+    banks = cur.fetchall()
+    cur.execute("SELECT * FROM Recipients ORDER BY last_name, first_name;")
+    recipients = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('inventory.html', inventory=inventory, banks=banks, recipients=recipients, search_group=search_group, search_bank=search_bank)
+
+@app.route('/inventory/use/<int:bag_id>', methods=['POST'])
+@login_required
+def use_blood_bag(bag_id):
+    if getattr(current_user, 'is_admin', False):
+        flash("Admins cannot perform this action.", "error")
+        return redirect(url_for('view_inventory'))
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    recipient_id = request.form.get('recipient_id')
+    new_recipient_first_name = request.form.get('new_recipient_first_name')
+    new_recipient_last_name = request.form.get('new_recipient_last_name')
+    new_recipient_blood_group = request.form.get('new_recipient_blood_group')
+    new_recipient_hospital = request.form.get('new_recipient_hospital')
+    
+    try:
+        if new_recipient_first_name and new_recipient_last_name and new_recipient_blood_group:
+            cur.execute(
+                "INSERT INTO Recipients (first_name, last_name, blood_group, hospital_name) VALUES (%s, %s, %s, %s) RETURNING recipient_id;",
+                (new_recipient_first_name, new_recipient_last_name, new_recipient_blood_group, new_recipient_hospital)
+            )
+            recipient_id = cur.fetchone()['recipient_id']
+        
+        if not recipient_id:
+            flash('You must select an existing recipient or enter details for a new one.', 'error')
+            return redirect(url_for('view_inventory'))
+
+        cur.execute("UPDATE BloodInventory SET status = 'Used' WHERE bag_id = %s;", (bag_id,))
+        cur.execute("INSERT INTO BloodTransfusions (bag_id, recipient_id) VALUES (%s, %s);", (bag_id, recipient_id))
+        
+        conn.commit()
+        flash('Blood bag marked as used and transfusion recorded!', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash(f'An error occurred: {e}', 'error')
+    finally:
+        cur.close()
+        conn.close()
+        
+    return redirect(url_for('view_inventory'))
+
+@app.route('/reports')
+@login_required
+def view_reports():
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute("SELECT blood_group, COUNT(bag_id) as count FROM BloodInventory WHERE status = 'Available' GROUP BY blood_group;")
+    inventory_rows = cur.fetchall()
+    inventory_chart_data = [dict(row) for row in inventory_rows]
+    cur.execute("SELECT TO_CHAR(donation_date, 'YYYY-MM') as month, COUNT(bag_id) as count FROM BloodInventory GROUP BY month ORDER BY month;")
+    monthly_rows = cur.fetchall()
+    monthly_chart_data = [dict(row) for row in monthly_rows]
+    cur.execute("SELECT first_name, last_name, blood_group, contact_number, last_donation_date FROM Donors WHERE last_donation_date IS NULL OR last_donation_date <= CURRENT_DATE - INTERVAL '90 days' ORDER BY last_donation_date DESC NULLS FIRST;")
+    eligible_donors = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('reports.html', inventory_chart_data=inventory_chart_data, monthly_chart_data=monthly_chart_data, eligible_donors=eligible_donors)
+
