@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <!-- THE FIX: New page header with contextual Add button -->
     <div class="page-header">
         <h1>Registered Donors</h1>
         {% if not current_user.is_admin %}
-            <a href="{{ url_for('add_donor') }}" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Add Donor</a>
+            <a href="{{ url_for('add_donor') }}" class="btn btn-primary">
+                <i class="fa-solid fa-user-plus"></i> Add Donor
+            </a>
         {% endif %}
     </div>
 
@@ -18,18 +19,23 @@
             </tr>
         </thead>
         <tbody>
-            {% for donor in donors %}
-            <tr>
-                <td><a href="{{ url_for('view_donor_detail', donor_id=donor.donor_id) }}" style="color: white;">{{ donor.first_name }} {{ donor.last_name }}</a></td>
-                <td>{{ donor.blood_group }}</td>
-                <td>{{ donor.contact_number }}</td>
-            </tr>
+            {% if donors %}
+                {% for donor in donors %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('view_donor_detail', donor_id=donor.donor_id) }}" style="color: white;">
+                                {{ donor.first_name }} {{ donor.last_name }}
+                            </a>
+                        </td>
+                        <td>{{ donor.blood_group }}</td>
+                        <td>{{ donor.contact_number }}</td>
+                    </tr>
+                {% endfor %}
             {% else %}
-            <tr>
-                <td colspan="3" style="text-align: center;">No donors found.</td>
-            </tr>
-            {% endfor %}
+                <tr>
+                    <td colspan="3" style="text-align: center;">No donors found.</td>
+                </tr>
+            {% endif %}
         </tbody>
     </table>
 {% endblock %}
-
