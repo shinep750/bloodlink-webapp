@@ -1,39 +1,38 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block content %}
-<div class="container">
-    <div class="card">
-        <h2>Edit Staff User</h2>
-        <form method="POST">
-            <div class="form-group">
-                <label for="full_name">Full Name</label>
-                <input type="text" name="full_name" id="full_name" class="form-control" 
-                       value="{{ staff.full_name }}" required>
-            </div>
+    <div class="page-header">
+        <h1>Edit User: {{ user.username }}</h1>
+        <a href="{{ url_for('manage_users') }}" class="btn btn-secondary">Back to User List</a>
+    </div>
 
+    <div class="card form-container">
+        <form method="post">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" name="username" id="username" class="form-control" 
-                       value="{{ staff.username }}" required>
+                <input type="text" name="username" id="username" value="{{ user.username }}" disabled>
+                <small style="color: var(--text-muted);">Username cannot be changed.</small>
             </div>
-
             <div class="form-group">
-                <label for="secret_code">Secret Code (for staff only)</label>
-                <input type="text" name="secret_code" id="secret_code" class="form-control" 
-                       value="{{ staff.secret_code if staff.secret_code else '' }}">
-                <small class="form-text text-muted">
-                    Leave blank if this user is an admin.
-                </small>
+                <label for="full_name">Full Name</label>
+                <input type="text" name="full_name" id="full_name" value="{{ user.full_name }}" required>
             </div>
-
-            <div class="form-group checkbox-group">
-                <input type="checkbox" name="is_admin" id="is_admin" {% if staff.is_admin %}checked{% endif %}>
-                <label for="is_admin">Administrator</label>
+            <div class="form-group">
+                <label for="secret_code">Staff ID (for Staff login)</label>
+                <input type="text" name="secret_code" id="secret_code" value="{{ user.secret_code or '' }}">
             </div>
-
-            <button type="submit" class="btn btn-primary">Update User</button>
-            <a href="{{ url_for('manage_users') }}" class="btn btn-secondary">Cancel</a>
+             <div class="form-group checkbox-group">
+                <input type="checkbox" name="is_admin" id="is_admin" value="true" {% if user.is_admin %}checked{% endif %}>
+                <label for="is_admin">Make this user an Administrator</label>
+            </div>
+            <hr style="border-color: var(--border-color); margin: 2rem 0;">
+            <div class="form-group">
+                <label for="new_password">New Password (Optional)</label>
+                <input type="password" name="new_password" id="new_password">
+                <small style="color: var(--text-muted);">Leave blank to keep the current password.</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
         </form>
     </div>
-</div>
 {% endblock %}
+
