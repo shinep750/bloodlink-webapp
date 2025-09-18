@@ -261,12 +261,35 @@
         .toast.success { background-color: #28a745; color: white; }
         .toast.error { background-color: var(--danger-color); color: white; }
 
+        /* ✅ Fixed mobile nav */
         @media (max-width: 1024px) {
             .navbar-links, .navbar-right { display: none; }
             .menu-toggle { display: block; font-size: 1.5rem; color: white; background: none; border: none; cursor: pointer; }
-            .mobile-nav.active { display: block; list-style: none; padding: 0; margin: 0; background-color: #a01818; width: 100%; position: absolute; top: 70px; left: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-            .mobile-nav li a { display: block; padding: 1rem 2rem; color: white; text-decoration: none; }
+            .mobile-nav.active {
+                display: block;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                background-color: #a01818;
+                width: 100%;
+                position: relative;   /* ✅ fix overlap */
+                top: 0;
+                left: 0;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                animation: slideDown 0.3s ease-out;
+            }
+            .mobile-nav li a {
+                display: block;
+                padding: 1rem 2rem;
+                color: white;
+                text-decoration: none;
+            }
+            @keyframes slideDown {
+                from { max-height: 0; opacity: 0; }
+                to { max-height: 500px; opacity: 1; }
+            }
         }
+
         @media (max-width: 768px) {
             .dashboard-grid, .reports-grid { grid-template-columns: 1fr; }
             .container { padding: 0 1rem; }
@@ -294,7 +317,6 @@
         </ul>
 
         <div class="navbar-right">
-            <!-- THE FIX: The Add dropdown is now permanently removed -->
             <div class="user-actions">
                 {% if current_user.is_admin %}
                     <a href="{{ url_for('profile') }}" class="user-info" style="color: white; text-decoration: none;">Welcome, {{ current_user.full_name }}</a>
@@ -319,7 +341,6 @@
             <li><a href="{{ url_for('manage_users') }}">Admin</a></li>
         {% endif %}
         {% if current_user.is_authenticated %}
-            <!-- Add buttons will be on their respective pages -->
             {% if current_user.is_admin %}
                 <li><a href="{{ url_for('profile') }}">My Profile</a></li>
             {% endif %}
@@ -367,4 +388,3 @@
     {% endblock %}
 </body>
 </html>
-
