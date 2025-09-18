@@ -283,7 +283,7 @@ def delete_user(staff_id):
 def index():
     conn = get_db_connection()
     if not conn:
-        return "<h1>Error: Could not connect to the database. Please check server logs.</h1>\"
+        return "<h1>Error: Could not connect to the database. Please check server logs.</h1>"
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute(\"SELECT COUNT(*) FROM Donors;\")
     total_donors = cur.fetchone()[0]
