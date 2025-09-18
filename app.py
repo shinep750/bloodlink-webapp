@@ -34,8 +34,7 @@ class StaffUser(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     conn = get_db_connection()
-    if not conn: 
-        return None
+    if not conn: return None
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute("SELECT * FROM Staff WHERE staff_id = %s", [user_id])
     user = cur.fetchone()
@@ -230,27 +229,23 @@ def edit_user(staff_id):
         full_name = request.form['full_name']
         username = request.form.get('username')
         secret_code = request.form.get('secret_code')
-        password = request.form.get('password', '').strip()
+        password = request.form.get('password')
         is_admin = 'is_admin' in request.form
 
         try:
-            if password:
+            if password.strip():
                 password_hash = generate_password_hash(password)
                 cur.execute("""
                     UPDATE Staff
-                    SET full_name = %s, username = %s, secret_code = %s,
-                        is_admin = %s, password_hash = %s
+                    SET full_name = %s, username = %s, secret_code = %s, is_admin = %s, password_hash = %s
                     WHERE staff_id = %s;
-                """, (full_name, username, secret_code if not is_admin else None,
-                      is_admin, password_hash, staff_id))
+                """, (full_name, username, secret_code if not is_admin else None, is_admin, password_hash, staff_id))
             else:
                 cur.execute("""
                     UPDATE Staff
-                    SET full_name = %s, username = %s, secret_code = %s,
-                        is_admin = %s
+                    SET full_name = %s, username = %s, secret_code = %s, is_admin = %s
                     WHERE staff_id = %s;
-                """, (full_name, username, secret_code if not is_admin else None,
-                      is_admin, staff_id))
+                """, (full_name, username, secret_code if not is_admin else None, is_admin, staff_id))
 
             conn.commit()
             flash("User updated successfully.", "success")
@@ -288,26 +283,26 @@ def delete_user(staff_id):
 def index():
     conn = get_db_connection()
     if not conn:
-        return "<h1>Error: Could not connect to the database. Please check server logs.</h1>"
+        return "<h1>Error: Could not connect to the database. Please check server logs.</h1>\"
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cur.execute("SELECT COUNT(*) FROM Donors;")
+    cur.execute(\"SELECT COUNT(*) FROM Donors;\")
     total_donors = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM BloodInventory WHERE status = 'Available';")
+    cur.execute(\"SELECT COUNT(*) FROM BloodInventory WHERE status = 'Available';\")
     available_bags = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM BloodTransfusions;")
+    cur.execute(\"SELECT COUNT(*) FROM BloodTransfusions;\")
     total_transfusions = cur.fetchone()[0]
     stats = {
         'total_donors': total_donors,
         'available_bags': available_bags,
         'total_transfusions': total_transfusions
     }
-    cur.execute("SELECT blood_group FROM BloodInventory WHERE status = 'Available' GROUP BY blood_group HAVING COUNT(bag_id) < 3;")
+    cur.execute(\"SELECT blood_group FROM BloodInventory WHERE status = 'Available' GROUP BY blood_group HAVING COUNT(bag_id) < 3;\")
     shortages_rows = cur.fetchall()
     critical_shortages = [row['blood_group'] for row in shortages_rows]
-    cur.execute("SELECT bi.bag_id, bi.blood_group, bb.bank_name, bi.expiry_date FROM BloodInventory bi JOIN BloodBanks bb ON bi.bank_id = bb.bank_id WHERE bi.status = 'Available' AND bi.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '14 days' ORDER BY bi.expiry_date ASC;")
+    cur.execute(\"SELECT bi.bag_id, bi.blood_group, bb.bank_name, bi.expiry_date FROM BloodInventory bi JOIN BloodBanks bb ON bi.bank_id = bb.bank_id WHERE bi.status = 'Available' AND bi.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '14 days' ORDER BY bi.expiry_date ASC;\")
     expiring_soon = cur.fetchall()
     cur.close()
     conn.close()
     return render_template('index.html', stats=stats, critical_shortages=critical_shortages, expiring_soon=expiring_soon)
 
-# (other routes remain unchanged below…)
+# (other routes unchanged below...)
