@@ -1,27 +1,10 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <style>
-        /* Ensure Edit/Delete buttons have same size */
-        .admin-grid .btn {
-            min-width: 90px;
-            text-align: center;
-            justify-content: center;
-        }
-
-        /* Optional: align action buttons neatly */
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-        }
-    </style>
-
     <div class="page-header">
         <h1>Manage Staff & Admins</h1>
     </div>
-
     <div class="admin-grid">
-        <!-- Current Users -->
         <div class="card">
             <h3>Current Users</h3>
             <table>
@@ -43,16 +26,11 @@
                         <td>{{ user.secret_code if user.secret_code else 'N/A' }}</td>
                         <td>
                             <div class="action-buttons">
-                                <a href="{{ url_for('edit_user', staff_id=user.staff_id) }}" class="btn btn-secondary">
-                                    <i class="fa-solid fa-pen"></i> Edit
-                                </a>
-
+                                <a href="{{ url_for('edit_user', staff_id=user.staff_id) }}" class="btn btn-secondary">Edit</a>
+                                
                                 {% if user.staff_id != current_user.id %}
-                                <form action="{{ url_for('delete_user', staff_id=user.staff_id) }}" method="post"
-                                      onsubmit="return confirm('Are you sure you want to permanently delete this user?');">
-                                    <button type="submit" class="btn btn-danger">
-                                        <i class="fa-solid fa-trash"></i> Delete
-                                    </button>
+                                <form action="{{ url_for('delete_user', staff_id=user.staff_id) }}" method="post" onsubmit="return confirm('Are you sure you want to permanently delete this user?');">
+                                    <button type="submit" class="btn btn-danger">Delete</button>
                                 </form>
                                 {% endif %}
                             </div>
@@ -62,8 +40,6 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- Add New User -->
         <div class="card">
             <h3>Add New User</h3>
             <form action="{{ url_for('add_user') }}" method="post" class="form-container" style="margin: 0; max-width: 100%;">
@@ -91,4 +67,18 @@
             </form>
         </div>
     </div>
+
+    <style>
+        /* Ensure buttons inside Action column are the same size */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-buttons .btn {
+            flex: 1;                /* both buttons grow equally */
+            text-align: center;
+            min-width: 90px;        /* guarantee same width baseline */
+        }
+    </style>
 {% endblock %}
