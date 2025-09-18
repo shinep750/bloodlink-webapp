@@ -144,37 +144,20 @@
             gap: 1rem;
         }
         
+        /* THE FIX: New styles for table action buttons */
+        td .btn {
+            min-width: 80px; /* Ensures buttons have same minimum width */
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+        }
+        td form {
+            margin: 0; /* Removes extra space from the form wrapper */
+        }
+
+
         /* Mobile Menu Styles */
-        .menu-toggle {
-            display: none;
-            font-size: 1.5rem;
-            color: white;
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
-        .mobile-nav {
-            display: none;
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            background-color: #a01818;
-            width: 100%;
-            position: absolute;
-            top: 70px;
-            left: 0;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            z-index: 999;
-        }
-        .mobile-nav.active {
-            display: block;
-        }
-        .mobile-nav li a {
-            display: block;
-            padding: 1rem 2rem;
-            color: white;
-            text-decoration: none;
-        }
+        .menu-toggle { display: none; }
+        .mobile-nav { display: none; }
         
         .alert-container {
             display: flex;
@@ -291,8 +274,9 @@
 
         @media (max-width: 1024px) {
             .navbar-links, .navbar-right { display: none; }
-            .menu-toggle { display: block; }
-            .mobile-nav.active { display: block; }
+            .menu-toggle { display: block; font-size: 1.5rem; color: white; background: none; border: none; cursor: pointer; }
+            .mobile-nav.active { display: block; list-style: none; padding: 0; margin: 0; background-color: #a01818; width: 100%; position: absolute; top: 70px; left: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+            .mobile-nav li a { display: block; padding: 1rem 2rem; color: white; text-decoration: none; }
         }
         @media (max-width: 768px) {
             .dashboard-grid, .reports-grid { grid-template-columns: 1fr; }
@@ -302,7 +286,7 @@
         }
     </style>
 </head>
-<body {% if current_user.is_authenticated %}class="logged-in"{% else %}class="login-page"{% endif %}>
+<body {% if not current_user.is_authenticated %}class="login-page"{% else %}class="logged-in"{% endif %}>
     
     {% if current_user.is_authenticated %}
     <nav class="navbar">
