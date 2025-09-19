@@ -1,34 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-     <!-- Add Blood Bag Page -->
-        <div id="add" class="page hidden">
-            <h1 class="text-3xl font-bold text-white mb-6">Add New Blood Bag</h1>
-            <div class="main-content-card rounded-xl p-8 max-w-lg mx-auto">
-                <form id="add-blood-bag-form">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="blood-group" class="block mb-2 text-sm font-medium">Blood Group</label>
-                            <select id="blood-group" class="w-full p-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
-                                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
-                                <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="donor-id" class="block mb-2 text-sm font-medium">Donor ID</label>
-                            <input type="text" id="donor-id" class="w-full p-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
-                        </div>
-                    </div>
-                    <div class="mt-6">
-                        <label for="donation-date" class="block mb-2 text-sm font-medium">Donation Date</label>
-                        <input type="date" id="donation-date" class="w-full p-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
-                    </div>
-                    <div class="mt-8 flex justify-end">
-                        <button type="submit" class="btn-primary font-semibold py-2 px-6 rounded-lg">Add to Inventory</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+    <div class="page-header">
+        <h1>Available Blood Inventory</h1>
+        {% if not current_user.is_admin %}
+            <a href="{{ url_for('add_inventory') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Inventory</a>
+        {% endif %}
+    </div>
 
     <div class="card filter-card">
         <form method="get" action="{{ url_for('view_inventory') }}">
@@ -45,29 +23,42 @@
         </form>
     </div>
 
-     <!-- Inventory Page -->
-        <div id="inventory" class="page hidden">
-            <h1 class="text-3xl font-bold text-white mb-6">Inventory Management</h1>
-            <div class="main-content-card rounded-xl overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="table-header text-xs uppercase">
-                            <tr>
-                                <th class="p-4">Blood Type</th>
-                                <th class="p-4">Donor ID</th>
-                                <th class="p-4">Donation Date</th>
-                                <th class="p-4">Expires On</th>
-                                <th class="p-4">Status</th>
-                                <th class="p-4 text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventory-table-body">
-                            <!-- JS will populate this -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Bag ID</th>
+                <th>Blood Group</th>
+                <th>Donation Date</th>
+                <th>Expiry Date</th>
+                <th>Donor Name</th>
+                <th>Blood Bank</th>
+                {% if not current_user.is_admin %}
+                    <th>Action</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in inventory %}
+                <tr>
+                    <td>{{ item.bag_id }}</td>
+                    <td>{{ item.blood_group }}</td>
+                    <td>{{ item.donation_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ item.expiry_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ item.donor_name }}</td>
+                    <td>{{ item.bank_name }}</td>
+                    {% if not current_user.is_admin %}
+                        <td>
+                            <button type="button" class="btn btn-secondary" onclick="openTransfusionModal('{{ item.bag_id }}', '{{ item.blood_group }}')">
+                                Mark as Used
+                            </button>
+                        </td>
+                    {% endif %}
+                </tr>
+            {% else %}
+                <td colspan="{% if not current_user.is_admin %}7{% else %}6{% endif %}" style="text-align: center;">No inventory matching your filters.</td>
+            {% endfor %}
+        </tbody>
+    </table>
 
     {% if not current_user.is_admin %}
         <div id="transfusionModal" class="modal">
