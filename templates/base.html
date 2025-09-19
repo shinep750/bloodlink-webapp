@@ -16,6 +16,7 @@
             --text-color: #ffffff;
             --text-muted: #a0a0a0;
             --border-color: rgba(255, 255, 255, 0.1);
+            --danger-color: #dc3545;
         }
 
         body {
@@ -23,80 +24,14 @@
             background-color: var(--dark-bg);
             color: var(--text-color);
             margin: 0;
+            padding-top: 70px; /* Space for fixed navbar */
             line-height: 1.6;
-        }
-        
-        /* THE FIX: New Split-Screen Login Styles */
-        .login-page-wrapper {
-            display: flex;
-            height: 100vh;
-            width: 100%;
-            overflow: hidden; /* Prevents scrollbars on login page */
-        }
-        .info-panel {
-            flex: 1 1 55%; /* Takes up 55% of the width */
-            background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/bloodlink.jpg');
-            background-size: cover;
-            background-position: center;
-            padding: 4rem;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            box-sizing: border-box;
-        }
-        .info-panel h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        .info-panel p {
-            font-size: 1.2rem;
-            max-width: 500px;
-            color: rgba(255,255,255,0.8);
-        }
-        .login-panel {
-            flex: 1 1 45%; /* Takes up 45% of the width */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
-            background-color: #121212;
-            box-sizing: border-box;
-        }
-        .login-box {
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        .login-box h2 {
-            margin-top: 0;
-            margin-bottom: 2rem;
-            font-weight: 600;
-        }
-        .login-box .form-group {
-            text-align: left;
-        }
-        .login-box .btn-primary {
-            width: 100%;
-            padding: 0.8rem;
-            font-size: 1.1rem;
-            background-color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-        }
-        .login-footer a {
-            color: var(--text-muted);
-            text-decoration: none;
-        }
-
-        /* Styles for logged-in pages */
-        .app-body {
-            padding-top: 70px;
             background-size: cover;
             background-position: center center;
             background-attachment: fixed;
             position: relative;
         }
-        .app-body::before {
+        body::before {
             content: '';
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -107,49 +42,114 @@
             opacity: 0.5;
             z-index: -2;
         }
-        .app-body::after {
+        body::after {
             content: '';
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background-color: rgba(0, 0, 0, 0.6);
             z-index: -1;
         }
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
-        /* (and so on for all other existing styles) */
-        .navbar { background-color: var(--primary-color); padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; box-sizing: border-box; height: 70px; }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* All other styles (navbar, cards, tables, forms, etc.) are here */
+        .navbar { background-color: var(--primary-color); padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; box-sizing: border-box; height: 70px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         .navbar-brand { color: white; text-decoration: none; font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; }
         .navbar-brand i { margin-right: 0.75rem; }
         .navbar-links { list-style: none; display: flex; gap: 1.5rem; margin: 0; padding: 0; }
-        .navbar-links a { color: white; text-decoration: none; font-weight: 600; }
+        .navbar-links a { color: white; text-decoration: none; font-weight: 600; transition: color 0.2s; }
         .navbar-right { display: flex; align-items: center; gap: 1rem; }
+        .user-actions { display: flex; align-items: center; gap: 1rem; }
         .btn { padding: 0.6rem 1.2rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s; }
         .btn-primary { background-color: var(--primary-color); color: white; border: 2px solid white; }
         .btn-secondary { background-color: transparent; color: white; border: 2px solid white; }
-        .user-actions { display: flex; align-items: center; gap: 1rem; }
-
-        @media (max-width: 992px) {
-            .login-page-wrapper { flex-direction: column; }
-            .info-panel { display: none; } /* Hide info panel on mobile for a focused login */
-            .login-panel { flex-basis: 100%; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .page-header h1 { margin: 0; }
+        .card, table, .filter-card, .form-container { background: var(--card-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        h1, h2, h3 { color: white; margin-top: 0; }
+        
+        /* Mobile Menu */
+        .menu-toggle { display: none; }
+        .mobile-nav { display: none; z-index: 999; }
+        @media (max-width: 1024px) {
+            .navbar-links, .navbar-right { display: none; }
+            .menu-toggle { display: block; font-size: 1.5rem; color: white; background: none; border: none; cursor: pointer; }
+            .mobile-nav.active { display: block; list-style: none; padding: 0; margin: 0; background-color: #a01818; width: 100%; position: absolute; top: 70px; left: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+            .mobile-nav li a { display: block; padding: 1rem 2rem; color: white; text-decoration: none; }
         }
     </style>
 </head>
-<body {% if current_user.is_authenticated %}class="app-body"{% endif %}>
+<body>
     
-    {% if current_user.is_authenticated %}
     <nav class="navbar">
-        <!-- Full navbar content here -->
-    </nav>
-    {% endif %}
+        <a href="{{ url_for('index') }}" class="navbar-brand">
+            <i class="fa-solid fa-droplet"></i> BloodLink
+        </a>
+        
+        <ul class="navbar-links">
+            <li><a href="{{ url_for('index') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('view_inventory') }}">Inventory</a></li>
+            <li><a href="{{ url_for('view_reports') }}">Reports</a></li>
+            <li><a href="{{ url_for('view_donors') }}">Donors</a></li>
+             {% if current_user.is_admin %}
+                <li><a href="{{ url_for('manage_users') }}">Admin</a></li>
+            {% endif %}
+        </ul>
 
-    <div class="main-content-wrapper">
-        <div class="toast-container">
-            <!-- Flash messages here -->
+        <div class="navbar-right">
+            <div class="user-actions">
+                {% if current_user.is_admin %}
+                    <a href="{{ url_for('profile') }}" class="user-info" style="color: white; text-decoration: none;">Welcome, {{ current_user.full_name }}</a>
+                {% else %}
+                    <span class="user-info">Welcome, {{ current_user.full_name }}</span>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+            </div>
         </div>
+        
+        <button class="menu-toggle" id="menu-toggle-button">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </nav>
+    
+    <ul class="mobile-nav" id="mobile-menu">
+        <li><a href="{{ url_for('index') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('view_inventory') }}">Inventory</a></li>
+        <li><a href="{{ url_for('view_reports') }}">Reports</a></li>
+        <li><a href="{{ url_for('view_donors') }}">Donors</a></li>
+        {% if current_user.is_admin %}
+            <li><a href="{{ url_for('manage_users') }}">Admin</a></li>
+            <li><a href="{{ url_for('profile') }}">My Profile</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+    </ul>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <!-- Flash messages can be placed here if needed -->
+            {% endif %}
+        {% endwith %}
+        
         {% block content %}{% endblock %}
     </div>
 
     {% block scripts %}{% endblock %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menu-toggle-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('active');
+                });
+            }
+        });
+    </script>
 </body>
 </html>
 
