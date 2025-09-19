@@ -1,87 +1,141 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<div class="page-header">
     <h1>Dashboard</h1>
-    
-    <!-- Urgent Alerts Section -->
-    {% if critical_shortages %}
-    <div class="alert-container">
-        <div class="alert-icon">
-            <i class="fa-solid fa-triangle-exclamation"></i>
+    <!-- Quick Actions for Staff -->
+    {% if not current_user.is_admin %}
+        <div class="user-actions">
+            <a href="{{ url_for('add_inventory') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Inventory</a>
+            <a href="{{ url_for('add_donor') }}" class="btn btn-secondary"><i class="fa-solid fa-user-plus"></i> Add Donor</a>
         </div>
-        <div class="alert-content">
-            <h3>Urgent Shortage Alert!</h3>
-            <p>The following blood groups are critically low (less than 3 units available): 
-                <strong>{{ critical_shortages|join(', ') }}</strong>.
-            </p>
-        </div>
-    </div>
     {% endif %}
+</div>
 
-    <!-- ==> UPDATED: Dashboard Grid with new card structure <== -->
-    <div class="dashboard-grid">
-        <!-- Total Donors Card -->
-        <div class="card stat-card">
-            <div class="stat-card-info">
-                <h3>{{ stats.total_donors }}</h3>
-                <p>Total Donors</p>
+<!-- Main Dashboard Layout Grid -->
+<div class="dashboard-layout">
+
+    <!-- Main Content Area (Left) -->
+    <div class="main-content">
+        <!-- Urgent Alerts -->
+        {% if critical_shortages %}
+        <div class="alert-container alert-danger">
+            <div class="alert-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="alert-content">
+                <h3>Urgent Shortage Alert!</h3>
+                <p>Critically low stock (less than 3 units): <strong>{{ critical_shortages|join(', ') }}</strong>.</p>
             </div>
-            <div class="stat-card-icon">
-                <i class="fa-solid fa-users"></i>
+        </div>
+        {% endif %}
+
+        <!-- Quick Stats -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-card-info">
+                    <h3>{{ stats.total_donors }}</h3>
+                    <p>Total Donors</p>
+                </div>
+                <div class="stat-card-icon"><i class="fa-solid fa-users"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-info">
+                    <h3>{{ stats.available_bags }}</h3>
+                    <p>Available Bags</p>
+                </div>
+                <div class="stat-card-icon"><i class="fa-solid fa-syringe"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-info">
+                    <h3>{{ stats.total_transfusions }}</h3>
+                    <p>Total Transfusions</p>
+                </div>
+                <div class="stat-card-icon"><i class="fa-solid fa-heart-pulse"></i></div>
             </div>
         </div>
 
-        <!-- Available Blood Bags Card -->
-        <div class="card stat-card">
-            <div class="stat-card-info">
-                <h3>{{ stats.available_bags }}</h3>
-                <p>Available Blood Bags</p>
-            </div>
-            <div class="stat-card-icon">
-                <i class="fa-solid fa-syringe"></i>
-            </div>
-        </div>
-
-        <!-- Total Transfusions Card -->
-        <div class="card stat-card">
-            <div class="stat-card-info">
-                <h3>{{ stats.total_transfusions }}</h3>
-                <p>Total Transfusions</p>
-            </div>
-            <div class="stat-card-icon">
-                <i class="fa-solid fa-heart-pulse"></i>
+        <!-- Inventory Overview Chart -->
+        <div class="widget-card">
+            <h3>Inventory Overview</h3>
+            <div style="max-width: 300px; margin: 0 auto;">
+                 <canvas id="inventoryDonutChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Expiring Soon Section -->
-    <h2 style="margin-top: 2.5rem;">Inventory Expiring Soon</h2>
-    <div class="card">
-        <table>
-            <thead>
-                <tr>
-                    <th>Bag ID</th>
-                    <th>Blood Group</th>
-                    <th>Bank Name</th>
-                    <th>Expiry Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for bag in expiring_soon %}
-                <tr>
-                    <td>{{ bag.bag_id }}</td>
-                    <td>{{ bag.blood_group }}</td>
-                    <td>{{ bag.bank_name }}</td>
-                    <td>{{ bag.expiry_date.strftime('%Y-%m-%d') }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" style="text-align: center;">No blood bags are expiring soon.</td>
-                </tr>
+    <!-- Sidebar (Right) -->
+    <div class="sidebar">
+        <!-- WHO Notifications Widget -->
+        <div class="widget-card">
+            <h3><i class="fa-solid fa-bell"></i> Health Notifications</h3>
+            <ul class="notification-list">
+                {% for notification in notifications %}
+                <li>
+                    <p>{{ notification.content }}</p>
+                    <span class="source">{{ notification.source }}</span>
+                </li>
                 {% endfor %}
-            </tbody>
-        </table>
+            </ul>
+        </div>
+
+        <!-- Latest News Widget -->
+        <div class="widget-card">
+            <h3><i class="fa-solid fa-newspaper"></i> Latest News</h3>
+            <ul class="news-list">
+                 {% for article in news_articles %}
+                <li>
+                    <p>{{ article.title }}</p>
+                    <span class="source">{{ article.source }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
+</div>
 {% endblock %}
 
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const inventoryData = {{ inventory_chart_data|tojson|safe }};
+    const donutCtx = document.getElementById('inventoryDonutChart');
+
+    if (donutCtx && inventoryData.length > 0) {
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: inventoryData.map(item => item.blood_group),
+                datasets: [{
+                    label: 'Available Bags',
+                    data: inventoryData.map(item => item.count),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)',
+                        'rgba(201, 203, 207, 0.7)',
+                        'rgba(255, 99, 71, 0.7)'
+                    ],
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
 
