@@ -14,7 +14,7 @@
             --dark-bg: #1a1a1a;
             --text-dark: #333;
             --text-light: #ffffff;
-            --border-color: #dee2e6;
+            --border-color-light: #dee2e6;
             --danger-color: #dc3545;
         }
 
@@ -135,7 +135,7 @@
             gap: 1rem;
         }
 
-        /* Styles for solid cards and content */
+        /* THE FIX: Styles reverted to solid cards */
         .card, table, .form-container, .filter-card, .alert-container {
             background: #ffffff;
             border-radius: 12px;
@@ -160,7 +160,7 @@
         }
 
         table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
-        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border-color-light); }
         th { font-weight: 700; color: #555; }
         tbody tr:hover { background-color: #f9f9f9; }
         
