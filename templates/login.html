@@ -1,53 +1,174 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BloodLink</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #c81e1e;
+            --dark-bg: #1a1a1a;
+            --text-color: #ffffff;
+            --text-muted: #a0a0a0;
+            --border-color: rgba(255, 255, 255, 0.2);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            color: var(--text-color);
+        }
+        .login-page-wrapper {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
+        }
+        .info-panel {
+            flex: 1 1 55%;
+            background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/bloodlink.jpg');
+            background-size: cover;
+            background-position: center;
+            padding: 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+        .info-panel h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .info-panel p {
+            font-size: 1.2rem;
+            max-width: 500px;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.9);
+        }
+        .login-panel {
+            flex: 1 1 45%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            background-color: #121212;
+            box-sizing: border-box;
+        }
+        .login-box {
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+        }
+        .login-box h2 {
+            margin-top: 0;
+            margin-bottom: 2.5rem;
+            font-weight: 600;
+            font-size: 1.8rem;
+        }
+        .form-group {
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background-color: #1f1f1f;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1.1rem;
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #a01818;
+        }
+        .login-footer {
+            margin-top: 1.5rem;
+        }
+        .login-footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .toast.error {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 992px) {
+            .info-panel { display: none; }
+            .login-panel { flex-basis: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-page-wrapper">
+        <div class="info-panel">
+            <h1>Welcome to BloodLink</h1>
+            <p>Your dedicated platform for managing life-saving blood donations. Every action you take helps connect donors with those in need.</p>
+        </div>
+        <div class="login-panel">
+            <div class="login-box">
+                <h2>{% if is_admin_login %}Admin Login{% else %}Staff Login{% endif %}</h2>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="toast {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
-{% block content %}
-<!-- New split-screen structure -->
-<div class="login-page-wrapper">
+                <form method="post">
+                    {% if is_admin_login %}
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" name="username" id="username" required>
+                    </div>
+                    {% else %}
+                    <div class="form-group">
+                        <label for="secret_code">Staff ID</label>
+                        <input type="text" name="secret_code" id="secret_code" required>
+                    </div>
+                    {% endif %}
 
-    <!-- Information Panel (Left Side) -->
-    <div class="info-panel">
-        <h1>Welcome to BloodLink</h1>
-        <p>Your dedicated platform for managing life-saving blood donations. Every action you take helps connect donors with those in need.</p>
-        <hr style="border-color: rgba(255,255,255,0.2); margin: 2rem 0;">
-        <h3>Did you know?</h3>
-        <p>A single blood donation can help save up to three lives. Thank you for being a part of this vital process.</p>
-    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" name="password" id="password" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Login</button>
+                </form>
 
-    <!-- Login Panel (Right Side) -->
-    <div class="login-panel">
-        <div class="login-box">
-            <h2>{% if is_admin_login %}Admin Login{% else %}Staff Login{% endif %}</h2>
-
-            <form method="post">
-                {% if is_admin_login %}
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" name="username" id="username" required>
+                <div class="login-footer">
+                    {% if is_admin_login %}
+                        <a href="{{ url_for('login') }}">Switch to Staff Login</a>
+                    {% else %}
+                        <a href="{{ url_for('admin_login') }}">Login as Administrator</a>
+                    {% endif %}
                 </div>
-                {% else %}
-                <div class="form-group">
-                    <label for="secret_code">Staff ID</label>
-                    <input type="text" name="secret_code" id="secret_code" required>
-                </div>
-                {% endif %}
-
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" name="password" id="password" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Login</button>
-            </form>
-
-            <div class="login-footer">
-                {% if is_admin_login %}
-                    <a href="{{ url_for('login') }}">Switch to Staff Login</a>
-                {% else %}
-                    <a href="{{ url_for('admin_login') }}">Login as Administrator</a>
-                {% endif %}
             </div>
         </div>
     </div>
-
-</div>
-{% endblock %}
+</body>
+</html>
 
