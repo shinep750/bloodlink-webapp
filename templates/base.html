@@ -19,6 +19,77 @@
             --danger-color: #dc3545;
         }
 
+        /* -------------------------
+           LOGIN-PAGE ONLY STYLES
+           These target body.login-page so other pages are unaffected
+           ------------------------- */
+        body.login-page {
+            /* center the login box vertically and horizontally */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 560px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+            z-index: 10;
+            margin: 1rem;
+            color: var(--text-color);
+            box-sizing: border-box;
+        }
+
+        .login-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .login-header i { font-size: 1.6rem; color: white; }
+        .login-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; color: white; }
+
+        .login-box h2 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .login-box .form-group { margin-bottom: 1rem; text-align: left; }
+        .login-box .form-group label { display:block; margin-bottom: .5rem; font-weight:600; color: #fff; }
+        .login-box .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: rgba(0,0,0,0.18);
+            color: white;
+            box-sizing: border-box;
+        }
+
+        .login-box .login-footer { margin-top: 1rem; text-align: left; }
+        .login-box .login-footer a { color: var(--text-muted); text-decoration: none; }
+        .login-box .login-footer a:hover { text-decoration: underline; }
+
+        .login-box .btn-primary {
+            width: auto;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        /* -------------------------
+           End login-only styles
+           ------------------------- */
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--dark-bg);
@@ -297,4 +368,3 @@
     {% endblock %}
 </body>
 </html>
-
