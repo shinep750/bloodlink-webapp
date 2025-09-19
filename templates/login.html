@@ -1,41 +1,53 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- THE FIX: All login elements are now inside this box -->
-<div class="login-box">
-    <div class="login-header">
-        <i class="fa-solid fa-droplet"></i>
-        <h1>BloodLink</h1>
+<!-- THE FIX: New split-screen structure -->
+<div class="login-page-wrapper">
+
+    <!-- Information Panel (Left Side) -->
+    <div class="info-panel">
+        <h1>Welcome to BloodLink</h1>
+        <p>Your dedicated platform for managing life-saving blood donations. Every action you take helps connect donors with those in need.</p>
+        <hr style="border-color: rgba(255,255,255,0.2); margin: 2rem 0;">
+        <h3>Did you know?</h3>
+        <p>A single blood donation can help save up to three lives. Thank you for being a part of this vital process.</p>
     </div>
-    
-    <h2>{% if is_admin_login %}Admin Login{% else %}Staff Login{% endif %}</h2>
 
-    <form method="post">
-        {% if is_admin_login %}
-        <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" name="username" id="username" required>
-        </div>
-        {% else %}
-        <div class="form-group">
-            <label for="secret_code">Staff ID</label>
-            <input type="text" name="secret_code" id="secret_code" required>
-        </div>
-        {% endif %}
+    <!-- Login Panel (Right Side) -->
+    <div class="login-panel">
+        <div class="login-box">
+            <h2>{% if is_admin_login %}Admin Login{% else %}Staff Login{% endif %}</h2>
 
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" name="password" id="password" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Login</button>
-    </form>
+            <form method="post">
+                {% if is_admin_login %}
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" name="username" id="username" required>
+                </div>
+                {% else %}
+                <div class="form-group">
+                    <label for="secret_code">Staff ID</label>
+                    <input type="text" name="secret_code" id="secret_code" required>
+                </div>
+                {% endif %}
 
-    <div class="login-footer">
-        {% if is_admin_login %}
-            <a href="{{ url_for('login') }}">Switch to Staff Login</a>
-        {% else %}
-            <a href="{{ url_for('admin_login') }}">Login as Administrator</a>
-        {% endif %}
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" name="password" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+
+            <div class="login-footer">
+                {% if is_admin_login %}
+                    <a href="{{ url_for('login') }}">Switch to Staff Login</a>
+                {% else %}
+                    <a href="{{ url_for('admin_login') }}">Login as Administrator</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
+
 </div>
 {% endblock %}
+
