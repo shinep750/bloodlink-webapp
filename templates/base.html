@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BloodLink</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -136,6 +139,15 @@
 
         @media (max-width: 1200px) { .dashboard-layout { grid-template-columns: 1fr; } }
         @media (max-width: 768px) { .stat-grid { grid-template-columns: 1fr; } }
+        
+
+.stat-card, .widget-card, .alert-container, .main-content-card {
+            background-color: #1f2937; /* Dark card background */
+            border: 1px solid #374151; /* Subtle border */
+        }
+
+
+        
     </style>
 </head>
 <body {% if not current_user.is_authenticated %}class="login-page"{% else %}class="logged-in"{% endif %}>
@@ -199,6 +211,21 @@
         {% block content %}{% endblock %}
     </div>
 
+
+<!-- Main Content -->
+    <main class="flex-1 p-6 md:p-8 overflow-y-auto">
+          <div class="widget-card p-5 rounded-xl">
+                        <h3 class="text-lg font-semibold text-white mb-4">Inventory Overview</h3>
+                        <div class="max-w-xs mx-auto">
+                             <canvas id="inventoryDonutChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+
+    
+
     {% block scripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -215,6 +242,44 @@
                 menuToggle.addEventListener('click', function() { mobileMenu.classList.toggle('active'); });
             }
         });
+
+
+
+         // Chart
+                const inventoryChartData = bloodGroups.map(bg => ({
+                    blood_group: bg,
+                    count: inventoryCounts[bg]
+                }));
+                const donutCtx = document.getElementById('inventoryDonutChart').getContext('2d');
+                if(inventoryChart) inventoryChart.destroy();
+                inventoryChart = new Chart(donutCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: inventoryChartData.map(item => item.blood_group),
+                        datasets: [{
+                            label: 'Available Bags',
+                            data: inventoryChartData.map(item => item.count),
+                            backgroundColor: ['#ef4444', '#f87171', '#fb923c', '#fcd34d', '#a3e635', '#4ade80', '#2dd4bf', '#38bdf8'],
+                            borderColor: '#1f2937',
+                            borderWidth: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#d1d5db', boxWidth: 15, padding: 20 }
+                            }
+                        }
+                    }
+                });
+
+
+
+
+        
     </script>
     {% endblock %}
 </body>
