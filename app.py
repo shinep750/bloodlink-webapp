@@ -7,6 +7,9 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from psycopg2 import errors
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+import json
+# In a real app, you'd use a proper news API client
+import urllib.request
 
 app = Flask(__name__)
 
@@ -50,7 +53,7 @@ def load_user(user_id):
         )
     return None
 
-# --- Middleware for Forced Password Change (Admins Only) ---
+# --- Middleware & Decorators ---
 @app.before_request
 def before_request_callback():
     if current_user.is_authenticated and getattr(current_user, 'is_admin', False) and getattr(current_user, 'must_change_password', False):
@@ -58,7 +61,6 @@ def before_request_callback():
             flash("For security, you must change your default password before you can use the application.", "error")
             return redirect(url_for('profile'))
 
-# --- Admin Required Decorator ---
 def admin_required(f):
     @functools.wraps(f)
     def decorated_function(*args, **kwargs):
@@ -77,8 +79,78 @@ def get_db_connection():
     except Exception as e:
         print(f"Database connection error: {e}")
         return None
+        
+# --- THE FIX: Main Dashboard Route ---
+@app.route('/')
+@login_required
+def index():
+    conn = get_db_connection()
+    if not conn:
+        return render_template('error.html', message="Could not connect to the database.")
+    
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    # Standard stats
+    cur.execute("SELECT COUNT(*) FROM Donors;")
+    total_donors = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM BloodInventory WHERE status = 'Available';")
+    available_bags = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM BloodTransfusions;")
+    total_transfusions = cur.fetchone()[0]
+    stats = {
+        'total_donors': total_donors,
+        'available_bags': available_bags,
+        'total_transfusions': total_transfusions
+    }
+    
+    # Shortage alerts
+    cur.execute("SELECT blood_group FROM BloodInventory WHERE status = 'Available' GROUP BY blood_group HAVING COUNT(bag_id) < 3;")
+    shortages_rows = cur.fetchall()
+    critical_shortages = [row['blood_group'] for row in shortages_rows]
+    
+    # New: Data for the inventory donut chart
+    cur.execute("SELECT blood_group, COUNT(bag_id) as count FROM BloodInventory WHERE status = 'Available' GROUP BY blood_group;")
+    inventory_chart_rows = cur.fetchall()
+    inventory_chart_data = [dict(row) for row in inventory_chart_rows]
 
-# --- Authentication Routes ---
+    cur.close()
+    conn.close()
+
+    # New: Mock WHO Notifications
+    notifications = [
+        {"id": 1, "content": "Global call for O-negative blood donors for emergency response.", "source": "W.H.O."},
+        {"id": 2, "content": "Seasonal flu may impact donor eligibility. Please check guidelines.", "source": "National Health Service"},
+        {"id": 3, "content": "New plasma donation center opening in Kochi next month.", "source": "Regional Health Authority"}
+    ]
+
+    # New: Fetch live news (simulated)
+    # In a real app, this would use a proper news API and have robust error handling.
+    # For this project, we will use a simple placeholder if the search fails.
+    news_articles = []
+    try:
+        # This is a placeholder for a real news API call. 
+        # We will simulate it with a few static articles.
+        news_articles = [
+            {"title": "Blood donation camps see surge in participation post-awareness campaign", "source": "Times of India"},
+            {"title": "New research highlights the importance of regular blood donation for cardiovascular health", "source": "The Hindu"},
+            {"title": "Hospitals in Kerala face seasonal shortage of A+ blood group", "source": "Onmanorama"}
+        ]
+    except Exception as e:
+        print(f"Could not fetch news articles: {e}")
+        news_articles = [{"title": "Could not load latest news.", "source": "System"}]
+
+
+    return render_template('index.html', 
+                           stats=stats, 
+                           critical_shortages=critical_shortages, 
+                           inventory_chart_data=inventory_chart_data,
+                           notifications=notifications,
+                           news_articles=news_articles)
+
+# --- All other routes remain the same ---
+# (login, admin_login, logout, profile, manage_users, add_user, edit_user, delete_user, 
+# view_donors, view_donor_detail, add_donor, add_inventory, view_inventory, use_blood_bag, view_reports)
+# ... [The rest of your app.py code is unchanged] ...
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -101,22 +173,18 @@ def handle_login_attempt(is_admin_login):
     if not conn:
         flash("Database connection error.", "error")
         return redirect(request.url)
-
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     user = None
-
     if is_admin_login:
         username = request.form['username']
         cur.execute("SELECT * FROM Staff WHERE username = %s AND is_admin = TRUE;", (username,))
         user = cur.fetchone()
-    else: # Staff login
+    else:
         secret_code = request.form['secret_code']
         cur.execute("SELECT * FROM Staff WHERE secret_code = %s AND is_admin = FALSE;", (secret_code,))
         user = cur.fetchone()
-
     cur.close()
     conn.close()
-
     if user and check_password_hash(user['password_hash'], password):
         staff_member = StaffUser(
             id=user['staff_id'],
@@ -147,16 +215,13 @@ def profile():
         current_password = request.form['current_password']
         new_password = request.form['new_password']
         confirm_password = request.form['confirm_password']
-
         if new_password != confirm_password:
             flash('The new passwords do not match. Please try again.', 'error')
             return redirect(url_for('profile'))
-
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("SELECT password_hash FROM Staff WHERE staff_id = %s;", (current_user.id,))
         user_data = cur.fetchone()
-        
         if not user_data or not check_password_hash(user_data['password_hash'], current_password):
             flash('Your current password was incorrect.', 'error')
         else:
@@ -167,10 +232,8 @@ def profile():
             cur.close()
             conn.close()
             return redirect(url_for('index'))
-
     return render_template('profile.html')
 
-# --- Admin Routes ---
 @app.route('/admin/users')
 @login_required
 @admin_required
@@ -192,7 +255,6 @@ def add_user():
     full_name = request.form['full_name']
     secret_code = request.form.get('secret_code')
     is_admin = 'is_admin' in request.form
-    
     password_hash = generate_password_hash(password)
     conn = get_db_connection()
     cur = conn.cursor()
@@ -215,22 +277,18 @@ def add_user():
 def edit_user(staff_id):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
     if request.method == 'POST':
         full_name = request.form['full_name']
         secret_code = request.form.get('secret_code')
         is_admin = 'is_admin' in request.form
         new_password = request.form['new_password']
-
         try:
             cur.execute("UPDATE Staff SET full_name = %s, secret_code = %s, is_admin = %s WHERE staff_id = %s;",
                         (full_name, secret_code if not is_admin else None, is_admin, staff_id))
-
             if new_password:
                 password_hash = generate_password_hash(new_password)
                 cur.execute("UPDATE Staff SET password_hash = %s, must_change_password = TRUE WHERE staff_id = %s;",
                             (password_hash, staff_id))
-
             conn.commit()
             flash('User details updated successfully!', 'success')
         except errors.UniqueViolation:
@@ -243,7 +301,6 @@ def edit_user(staff_id):
             cur.close()
             conn.close()
         return redirect(url_for('manage_users'))
-
     cur.execute("SELECT * FROM Staff WHERE staff_id = %s;", (staff_id,))
     user_to_edit = cur.fetchone()
     cur.close()
@@ -265,35 +322,6 @@ def delete_user(staff_id):
     conn.close()
     flash("Staff user deleted successfully.", "success")
     return redirect(url_for('manage_users'))
-
-# --- Standard Application Routes ---
-@app.route('/')
-@login_required
-def index():
-    conn = get_db_connection()
-    if not conn:
-        return render_template('error.html', message="Could not connect to the database.")
-    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    # ... (rest of the index logic is correct)
-    cur.execute("SELECT COUNT(*) FROM Donors;")
-    total_donors = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM BloodInventory WHERE status = 'Available';")
-    available_bags = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM BloodTransfusions;")
-    total_transfusions = cur.fetchone()[0]
-    stats = {
-        'total_donors': total_donors,
-        'available_bags': available_bags,
-        'total_transfusions': total_transfusions
-    }
-    cur.execute("SELECT blood_group FROM BloodInventory WHERE status = 'Available' GROUP BY blood_group HAVING COUNT(bag_id) < 3;")
-    shortages_rows = cur.fetchall()
-    critical_shortages = [row['blood_group'] for row in shortages_rows]
-    cur.execute("SELECT bi.bag_id, bi.blood_group, bb.bank_name, bi.expiry_date FROM BloodInventory bi JOIN BloodBanks bb ON bi.bank_id = bb.bank_id WHERE bi.status = 'Available' AND bi.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '14 days' ORDER BY bi.expiry_date ASC;")
-    expiring_soon = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('index.html', stats=stats, critical_shortages=critical_shortages, expiring_soon=expiring_soon)
     
 @app.route('/donors')
 @login_required
@@ -415,13 +443,11 @@ def use_blood_bag(bag_id):
         return redirect(url_for('view_inventory'))
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    
     recipient_id = request.form.get('recipient_id')
     new_recipient_first_name = request.form.get('new_recipient_first_name')
     new_recipient_last_name = request.form.get('new_recipient_last_name')
     new_recipient_blood_group = request.form.get('new_recipient_blood_group')
     new_recipient_hospital = request.form.get('new_recipient_hospital')
-    
     try:
         if new_recipient_first_name and new_recipient_last_name and new_recipient_blood_group:
             cur.execute(
@@ -429,14 +455,11 @@ def use_blood_bag(bag_id):
                 (new_recipient_first_name, new_recipient_last_name, new_recipient_blood_group, new_recipient_hospital)
             )
             recipient_id = cur.fetchone()['recipient_id']
-        
         if not recipient_id:
             flash('You must select an existing recipient or enter details for a new one.', 'error')
             return redirect(url_for('view_inventory'))
-
         cur.execute("UPDATE BloodInventory SET status = 'Used' WHERE bag_id = %s;", (bag_id,))
         cur.execute("INSERT INTO BloodTransfusions (bag_id, recipient_id) VALUES (%s, %s);", (bag_id, recipient_id))
-        
         conn.commit()
         flash('Blood bag marked as used and transfusion recorded!', 'success')
     except Exception as e:
@@ -445,7 +468,6 @@ def use_blood_bag(bag_id):
     finally:
         cur.close()
         conn.close()
-        
     return redirect(url_for('view_inventory'))
 
 @app.route('/reports')
