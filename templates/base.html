@@ -251,15 +251,7 @@
             <i class="fa-solid fa-droplet"></i> BloodLink
         </a>
         
-        <ul class="navbar-links">
-            <li><a href="{{ url_for('index') }}">Dashboard</a></li>
-            <li><a href="{{ url_for('view_inventory') }}">Inventory</a></li>
-            <li><a href="{{ url_for('view_reports') }}">Reports</a></li>
-            <li><a href="{{ url_for('view_donors') }}">Donors</a></li>
-             {% if current_user.is_admin %}
-                <li><a href="{{ url_for('manage_users') }}">Admin</a></li>
-            {% endif %}
-        </ul>
+       
 
         <div class="navbar-right">
             <div class="user-actions">
