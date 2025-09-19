@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+
     <style>
         :root {
             --primary-color: #c81e1e;
@@ -16,6 +17,7 @@
             --text-color: #ffffff;
             --text-muted: #a0a0a0;
             --border-color: rgba(255, 255, 255, 0.1);
+            --border-color-light: #ddd;
             --danger-color: #dc3545;
         }
 
@@ -36,11 +38,8 @@
             content: '';
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background-image: url('/static/bloodlink.jpg');
-            background-size: cover;
-            background-position: center center;
-            background-attachment: fixed;
-            opacity: 0.5;
-            z-index: -2;
+            background-size: cover; background-position: center center;
+            background-attachment: fixed; opacity: 0.5; z-index: -2;
         }
         body::after {
             content: '';
@@ -49,184 +48,202 @@
             z-index: -1;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
-        }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
 
-        /* NAVBAR */
+        /* Navbar */
         .navbar {
             background-color: var(--primary-color);
             padding: 0 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%;
-            z-index: 1000;
-            box-sizing: border-box;
-            height: 70px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: fixed; top: 0; left: 0; width: 100%;
+            z-index: 1000; height: 70px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
         .navbar-brand {
-            color: white;
-            text-decoration: none;
-            font-size: 1.5rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
+            color: white; text-decoration: none; font-size: 1.5rem;
+            font-weight: 700; display: flex; align-items: center;
         }
         .navbar-brand i { margin-right: 0.75rem; }
 
+        .navbar-links {
+            list-style: none; display: flex; gap: 1.5rem; margin: 0; padding: 0;
+        }
+        .navbar-links a {
+            color: white; text-decoration: none; font-weight: 600;
+            transition: color 0.2s;
+        }
+        .navbar-links a:hover { color: #ffdddd; }
+
         .navbar-right {
-            display: flex;
-            align-items: center;
-        }
-        .user-actions {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .user-info {
-            white-space: nowrap;
-            font-weight: 600;
-        }
-        .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            transition: all 0.2s;
-            background: white;
-            color: var(--primary-color);
-            border: none;
-        }
-        .btn:hover {
-            background: #f8f8f8;
+            display: flex; align-items: center; gap: 1rem;
         }
 
-        /* DASHBOARD LAYOUT */
+        /* Buttons */
+        .btn {
+            padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer;
+            font-weight: 600; text-decoration: none; display: inline-flex;
+            align-items: center; justify-content: center; gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white; border: 2px solid var(--primary-color);
+        }
+        .btn-primary:hover { background-color: #a01818; }
+        .btn-secondary {
+            background-color: transparent; color: white; border: 2px solid white;
+        }
+        .btn-secondary:hover { background-color: white; color: var(--primary-color); }
+
+        /* Dashboard Layout */
         .dashboard-layout {
             display: grid;
             grid-template-columns: 1fr 350px;
             gap: 2rem;
         }
         .main-content {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
+            display: flex; flex-direction: column; gap: 2rem;
         }
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
+        .sidebar { display: flex; flex-direction: column; gap: 2rem; }
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
         }
         .stat-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: var(--card-bg); backdrop-filter: blur(10px);
+            padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .stat-card-info h3 {
-            font-size: 2.5rem;
-            margin: 0;
-        }
-        .stat-card-info p {
-            margin: 0;
-            color: var(--text-muted);
-        }
-        .stat-card-icon i {
-            font-size: 3rem;
-            color: var(--primary-color);
-            opacity: 0.7;
-        }
+        .stat-card-info h3 { font-size: 2.5rem; margin: 0; }
+        .stat-card-info p { margin: 0; color: var(--text-muted); }
+        .stat-card-icon i { font-size: 3rem; color: var(--primary-color); opacity: 0.7; }
 
-        /* Widget styles */
         .widget-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
+            background: var(--card-bg); backdrop-filter: blur(10px);
+            padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);
         }
         .widget-card h3 {
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
+            margin-bottom: 1rem; padding-bottom: 0.5rem;
             border-bottom: 1px solid var(--border-color);
         }
-        .notification-list,
-        .news-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        .notification-list, .news-list { list-style: none; padding: 0; margin: 0; }
+        .notification-list li, .news-list li {
+            padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);
         }
-        .notification-list li,
-        .news-list li {
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .notification-list li:last-child,
-        .news-list li:last-child {
-            border-bottom: none;
-        }
-        .notification-list p,
-        .news-list p {
-            margin: 0;
-        }
-        .notification-list .source,
-        .news-list .source {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
+        .notification-list li:last-child, .news-list li:last-child { border-bottom: none; }
+        .notification-list p, .news-list p { margin: 0; }
+        .notification-list .source, .news-list .source { font-size: 0.8rem; color: var(--text-muted); }
 
-        /* RESPONSIVE FIXES */
-        @media (max-width: 1200px) {
-            .dashboard-layout { grid-template-columns: 1fr; }
+        /* Toasts */
+        .toast-container {
+            position: fixed; top: 90px; right: 20px; z-index: 2000;
+            display: flex; flex-direction: column; gap: 1rem;
         }
-        @media (max-width: 768px) {
-            .stat-grid { grid-template-columns: 1fr; }
-            .navbar { flex-direction: column; height: auto; padding: 1rem; }
-            .navbar-right { margin-top: 0.5rem; }
+        .toast {
+            padding: 1rem 1.5rem; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: flex; align-items: center; gap: 1rem;
+            opacity: 0; transform: translateX(100%);
+            animation: slideIn 0.5s forwards;
+        }
+        @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+        .toast.success { background-color: #28a745; color: white; }
+        .toast.error { background-color: var(--danger-color); color: white; }
+
+        /* Mobile */
+        .menu-toggle { display: none; }
+        .mobile-nav { display: none; z-index: 999; }
+        @media (max-width: 1200px) { .dashboard-layout { grid-template-columns: 1fr; } }
+        @media (max-width: 1024px) {
+            .navbar-links, .navbar-right { display: none; }
+            .menu-toggle { display: block; font-size: 1.5rem; color: white; background: none; border: none; cursor: pointer; }
+            .mobile-nav.active { display: block; list-style: none; padding: 0; margin: 0; background-color: #a01818; width: 100%; position: absolute; top: 70px; left: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+            .mobile-nav li a { display: block; padding: 1rem 2rem; color: white; text-decoration: none; }
         }
     </style>
 </head>
-<body class="logged-in">
-    <!-- Navbar -->
+<body {% if not current_user.is_authenticated %}class="login-page"{% else %}class="logged-in"{% endif %}>
+    
+    {% if current_user.is_authenticated %}
     <nav class="navbar">
         <a href="{{ url_for('index') }}" class="navbar-brand">
             <i class="fa-solid fa-droplet"></i> BloodLink
         </a>
+        
+        <ul class="navbar-links">
+            <li><a href="{{ url_for('index') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('view_inventory') }}">Inventory</a></li>
+            <li><a href="{{ url_for('view_reports') }}">Reports</a></li>
+            <li><a href="{{ url_for('view_donors') }}">Donors</a></li>
+            {% if current_user.is_admin %}
+                <li><a href="{{ url_for('manage_users') }}">Admin</a></li>
+            {% endif %}
+        </ul>
+
         <div class="navbar-right">
             <div class="user-actions">
-                <span class="user-info">Welcome, {{ current_user.username }}</span>
-                <a href="{{ url_for('logout') }}" class="btn">
+                <span class="user-info" style="color: white;">Welcome, {{ current_user.full_name }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary">
                     <i class="fa-solid fa-right-from-bracket"></i> Logout
                 </a>
             </div>
         </div>
+        
+        <button class="menu-toggle" id="menu-toggle-button">
+            <i class="fa-solid fa-bars"></i>
+        </button>
     </nav>
 
-    <div class="container">
+    <ul class="mobile-nav" id="mobile-menu">
+        <li><a href="{{ url_for('index') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('view_inventory') }}">Inventory</a></li>
+        <li><a href="{{ url_for('view_reports') }}">Reports</a></li>
+        <li><a href="{{ url_for('view_donors') }}">Donors</a></li>
+        {% if current_user.is_admin %}
+            <li><a href="{{ url_for('manage_users') }}">Admin</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('logout') }}">Logout ({{ current_user.full_name }})</a></li>
+    </ul>
+    {% endif %}
+
+    <div {% if current_user.is_authenticated %}class="container"{% endif %}>
+        <!-- Toasts -->
+        <div class="toast-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        </div>
+
         {% block content %}{% endblock %}
     </div>
 
     {% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toast auto-hide
+            const toasts = document.querySelectorAll('.toast');
+            toasts.forEach((toast, index) => {
+                setTimeout(() => {
+                    toast.style.animation = 'slideOut 0.5s forwards';
+                    setTimeout(() => toast.remove(), 500);
+                }, 5000 + index * 500);
+            });
+
+            // Mobile menu
+            const menuToggle = document.getElementById('menu-toggle-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('active');
+                });
+            }
+        });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% endblock %}
 </body>
