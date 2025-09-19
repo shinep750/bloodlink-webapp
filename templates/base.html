@@ -4,168 +4,246 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BloodLink</title>
-
-    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-
     <style>
         :root {
             --primary-color: #c81e1e;
             --dark-bg: #1a1a1a;
-            --card-bg: rgba(44, 44, 44, 0.75);
-            --text-color: #ffffff;
-            --text-muted: #a0a0a0;
-            --border-color: rgba(255, 255, 255, 0.1);
+            --text-dark: #333;
+            --text-light: #ffffff;
+            --border-color-light: #dee2e6;
+            --danger-color: #dc3545;
         }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--dark-bg);
-            color: var(--text-color);
+            color: var(--text-light);
             margin: 0;
             line-height: 1.6;
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            position: relative;
         }
-        body.logged-in { padding-top: 70px; }
-
-        /* Background overlay */
+        body.logged-in {
+             padding-top: 70px;
+        }
         body::before {
             content: '';
-            position: fixed; inset: 0;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
             background-image: url('/static/bloodlink.jpg');
             background-size: cover;
-            background-position: center;
+            background-position: center center;
+            background-attachment: fixed;
             opacity: 0.5;
             z-index: -2;
         }
         body::after {
             content: '';
-            position: fixed; inset: 0;
-            background-color: rgba(0,0,0,0.6);
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
             z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
         }
 
         /* Navbar */
         .navbar {
-            background: var(--primary-color);
-            height: 70px;
+            background-color: var(--primary-color);
             padding: 0 1.5rem;
-            display: flex; justify-content: space-between; align-items: center;
-            position: fixed; top: 0; left: 0; width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
             z-index: 1000;
+            box-sizing: border-box;
+            height: 70px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
         .navbar-brand {
-            color: white; text-decoration: none;
-            font-size: 1.5rem; font-weight: 700;
-            display: flex; align-items: center;
+            color: white;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
         }
         .navbar-brand i { margin-right: 0.75rem; }
-
         .navbar-links {
-            display: flex; align-items: center; gap: 1rem;
+            list-style: none;
+            display: flex;
+            gap: 1.5rem;
+            margin: 0;
+            padding: 0;
         }
         .navbar-links a {
-            color: white; text-decoration: none; font-weight: 600;
-            padding: 0.4rem 0.8rem; border-radius: 6px;
-        }
-        .navbar-links a:hover,
-        .navbar-links a.active {
-            background: rgba(255,255,255,0.2);
-        }
-
-        /* User actions (right side) */
-        .user-actions {
-            display: flex; align-items: center; gap: 0.75rem;
-        }
-        .btn {
-            background: white; color: var(--primary-color);
-            border: none; border-radius: 6px;
-            padding: 0.4rem 0.9rem;
-            cursor: pointer; font-weight: 600;
+            color: white;
             text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
         }
-        .btn:hover {
-            background: #f8f8f8;
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
-
-        /* Container */
-        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
-
-        /* Table Styling */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--card-bg);
-            backdrop-filter: blur(8px);
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
             border-radius: 8px;
-            overflow: hidden;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
         }
-        table thead {
-            background: rgba(255,255,255,0.1);
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: 2px solid var(--primary-color);
         }
-        table th, table td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--border-color);
-            text-align: left;
+        .btn-primary:hover {
+            background-color: #a01818;
         }
-        table th {
-            font-weight: 700;
-            color: var(--text-color);
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-dark);
+            border: 2px solid #ccc;
         }
-        table tbody tr:hover {
-            background: rgba(255,255,255,0.05);
+        .btn-secondary:hover {
+            background-color: #f1f1f1;
         }
-        table tbody tr:last-child td {
-            border-bottom: none;
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .navbar { flex-wrap: wrap; height: auto; padding: 1rem; }
-            .navbar-links { flex-wrap: wrap; justify-content: center; margin-top: 0.5rem; }
-            table th, table td { font-size: 0.9rem; padding: 0.5rem; }
+        /* THE FIX: Styles reverted to solid cards */
+        .card, table, .form-container, .filter-card, .alert-container, .login-box {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            color: var(--text-dark);
+        }
+        
+        h1 { color: white; }
+        h2, h3 { color: var(--text-dark); margin-top: 0; }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .page-header h1 {
+            margin: 0;
+            color: white; /* Title above card should be white */
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border-color-light); }
+        th { font-weight: 700; color: #555; }
+        tbody tr:hover { background-color: #f9f9f9; }
+        
+        .form-container { max-width: 600px; margin: 2rem auto; }
+        .form-group label { color: #555; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #f4f4f4;
+            color: var(--text-dark);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        /* Mobile Menu */
+        .menu-toggle { display: none; }
+        .mobile-nav { display: none; z-index: 999; }
+        @media (max-width: 1024px) {
+            .navbar-links, .navbar-right { display: none; }
+            .menu-toggle { display: block; font-size: 1.5rem; color: white; background: none; border: none; cursor: pointer; }
+            .mobile-nav.active { display: block; list-style: none; padding: 0; margin: 0; background-color: #a01818; width: 100%; position: absolute; top: 70px; left: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+            .mobile-nav li a { display: block; padding: 1rem 2rem; color: white; text-decoration: none; }
+        }
+         @media (max-width: 768px) {
+            .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            table { display: block; overflow-x: auto; }
         }
     </style>
 </head>
-<body class="logged-in">
-
-    <!-- Navbar -->
+<body {% if current_user.is_authenticated %}class="logged-in"{% endif %}>
+    
+    {% if current_user.is_authenticated %}
     <nav class="navbar">
-        <a href="{{ url_for('dashboard') }}" class="navbar-brand">
+        <a href="{{ url_for('index') }}" class="navbar-brand">
             <i class="fa-solid fa-droplet"></i> BloodLink
         </a>
+        
+        <ul class="navbar-links">
+            <li><a href="{{ url_for('index') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('view_inventory') }}">Inventory</a></li>
+            <li><a href="{{ url_for('view_reports') }}">Reports</a></li>
+            <li><a href="{{ url_for('view_donors') }}">Donors</a></li>
+            {% if current_user.is_admin %}
+                <li><a href="{{ url_for('manage_users') }}">Admin</a></li>
+            {% endif %}
+        </ul>
 
-        <div class="navbar-links">
-            <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">
-                <i class="fa-solid fa-gauge"></i> Dashboard
-            </a>
-            <a href="{{ url_for('donors') }}" class="{% if request.endpoint == 'donors' %}active{% endif %}">
-                <i class="fa-solid fa-users"></i> Donors
-            </a>
-            <a href="{{ url_for('inventory') }}" class="{% if request.endpoint == 'inventory' %}active{% endif %}">
-                <i class="fa-solid fa-box"></i> Inventory
-            </a>
-            <a href="{{ url_for('reports') }}" class="{% if request.endpoint == 'reports' %}active{% endif %}">
-                <i class="fa-solid fa-file-alt"></i> Reports
-            </a>
+        <div class="navbar-right">
+            <div class="user-actions">
+                <span style="color: white;">Welcome, {{ current_user.full_name }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="color: white; border-color: white;">Logout</a>
+            </div>
         </div>
-
-        <div class="user-actions">
-            <form action="{{ url_for('logout') }}" method="post" style="margin:0;">
-                <button type="submit" class="btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-            </form>
-        </div>
+        
+        <button class="menu-toggle" id="menu-toggle-button">
+            <i class="fa-solid fa-bars"></i>
+        </button>
     </nav>
+    
+    <ul class="mobile-nav" id="mobile-menu">
+        <!-- Mobile nav links here -->
+    </ul>
+    {% endif %}
 
-    <!-- Page Content -->
     <div class="container">
         {% block content %}{% endblock %}
     </div>
 
     {% block scripts %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menu-toggle-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('active');
+                });
+            }
+        });
+    </script>
     {% endblock %}
 </body>
 </html>
+
