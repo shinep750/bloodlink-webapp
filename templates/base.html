@@ -137,7 +137,9 @@
 
         /* THE FIX: Styles reverted to solid cards */
         .card, table, .form-container, .filter-card, .alert-container {
-            background: #ffffff;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-radius: 12px;
             padding: 1.5rem;
             border: 1px solid #e0e0e0;
