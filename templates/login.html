@@ -1,13 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- THE FIX: All login elements are now inside this box -->
+<!-- All login elements are now inside this single box -->
 <div class="login-box">
-    <div class="login-header">
-        <i class="fa-solid fa-droplet"></i>
-        <h1>BloodLink</h1>
-    </div>
-    
     <h2>{% if is_admin_login %}Admin Login{% else %}Staff Login{% endif %}</h2>
 
     <form method="post">
