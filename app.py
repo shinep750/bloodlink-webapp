@@ -328,7 +328,7 @@ def delete_user(staff_id):
 def view_donors():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cur.execute("SELECT donor_id, first_name, last_name, blood_group, contact_number FROM Donors ORDER BY first_name;")
+    cur.execute("SELECT donor_id, first_name, last_name, blood_group, contact_number FROM Donors ORDER BY donor_id;")
     donors = cur.fetchall()
     cur.close()
     conn.close()
@@ -341,7 +341,7 @@ def view_donor_detail(donor_id):
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute("SELECT * FROM Donors WHERE donor_id = %s;", (donor_id,))
     donor = cur.fetchone()
-    cur.execute("SELECT bi.donation_date, bi.status, bb.bank_name FROM BloodInventory bi JOIN BloodBanks bb ON bi.bank_id = bb.bank_id WHERE bi.donor_id = %s ORDER BY bi.donation_date DESC;", (donor_id,))
+    cur.execute("SELECT bi.donation_date, bi.status,bi.donor_id, bb.bank_name FROM BloodInventory bi JOIN BloodBanks bb ON bi.bank_id = bb.bank_id WHERE bi.donor_id = %s ORDER BY bi.donation_date DESC;", (donor_id,))
     donations = cur.fetchall()
     cur.close()
     conn.close()
