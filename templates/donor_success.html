@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Donor Registered Successfully 🎉</h1>
+    <p>Your assigned Donor ID is:</p>
+    <h2 style="color: red;">{{ donor_code }}</h2>
+    <a href="{{ url_for('donors') }}" class="btn">Back to Donors List</a>
+</div>
+{% endblock %}
+
