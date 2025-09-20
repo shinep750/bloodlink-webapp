@@ -350,32 +350,43 @@ def view_donor_detail(donor_id):
 @app.route('/add_donor', methods=['GET', 'POST'])
 @login_required
 def add_donor():
-    if getattr(current_user, 'is_admin', False):
-        flash("Admins cannot perform this action.", "error")
-        return redirect(url_for('index'))
-    if request.method == 'POST':
-        first_name = request.form['first_name']
-        last_name = request.form['last_name']
-        blood_group = request.form['blood_group']
-        contact_number = request.form['contact_number']
-        email = request.form['email']
-        address = request.form['address']
-        date_of_birth = request.form['date_of_birth']
+    if request.method == "POST":
+        first_name = request.form["first_name"]
+        last_name = request.form["last_name"]
+        blood_group = request.form["blood_group"]
+        contact_number = request.form["contact_number"]
+        email = request.form.get("email")
+        address = request.form.get("address")
+        date_of_birth = request.form["date_of_birth"]
+
         conn = get_db_connection()
         cur = conn.cursor()
+
         try:
-            cur.execute("INSERT INTO Donors (first_name, last_name, blood_group, contact_number, email, address, date_of_birth) VALUES (%s, %s, %s, %s, %s, %s, %s);",
-                        (first_name, last_name, blood_group, contact_number, email, address, date_of_birth))
+            cur.execute(
+                """
+                INSERT INTO donors (first_name, last_name, blood_group, contact_number, email, address, date_of_birth)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING donor_code
+                """,
+                (first_name, last_name, blood_group, contact_number, email, address, date_of_birth)
+            )
+            donor_code = cur.fetchone()[0]
             conn.commit()
-            flash('Donor added successfully!', 'success')
-        except errors.UniqueViolation:
+
+            flash(f"Donor added successfully! Assigned Donor ID: {donor_code}", "success")
+            return render_template("donor_success.html", donor_code=donor_code)
+
+        except psycopg2.Error as e:
             conn.rollback()
-            flash('Error: A donor with that contact number or email already exists.', 'error')
+            flash("Error adding donor: " + str(e), "danger")
+            return redirect(url_for("add_donor"))
+
         finally:
             cur.close()
             conn.close()
-        return redirect(url_for('view_donors'))
-    return render_template('add_donor.html')
+
+    return render_template("add_donor.html")
     
 @app.route('/add_inventory', methods=['GET', 'POST'])
 @login_required
